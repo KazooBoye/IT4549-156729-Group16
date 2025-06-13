@@ -15,6 +15,8 @@ import { AuthProvider } from './contexts/AuthContext';
 // Member Pages
 import MemberProfilePage from './pages/Member/MemberProfilePage';
 import MemberPaymentPage from './pages/Member/MemberPaymentPage';
+import MemberTrainingHistoryPage from './pages/Member/MemberTrainingHistoryPage';
+import ServiceUserRatingPage from './pages/Member/ServiceUserRatingPage';
 // Package Page (can be public or private depending on requirements)
 import ViewPackagesPage from './pages/Packages/ViewPackagesPage';
 
@@ -52,7 +54,17 @@ function App() {
                   <MemberPaymentPage />
                 </PrivateRoute>
               } />
-              {/* Add other member routes here: /member/history, /member/feedback, /member/booking */}
+              <Route path="/member/history" element={
+                <PrivateRoute allowedRoles={['member']}>
+                  <MemberTrainingHistoryPage />
+                </PrivateRoute>
+              } />
+              <Route path="/member/feedback" element={
+                <PrivateRoute allowedRoles={['member']}>
+                  <ServiceUserRatingPage />
+                </PrivateRoute>
+              } />
+              {/* Add other member routes here: /member/booking */}
 
 
               {/* Staff Specific Routes - Example placeholder */}

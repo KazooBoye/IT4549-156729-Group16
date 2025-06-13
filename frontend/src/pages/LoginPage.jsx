@@ -1,6 +1,6 @@
-import React, { useState/*, useContext*/ } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-// import { AuthContext } from '../contexts/AuthContext'; // To be created
+import AuthContext from '../contexts/AuthContext';
 import axios from 'axios'; // For API calls
 
 const LoginPage = () => {
@@ -8,18 +8,15 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  // const { login } = useContext(AuthContext); // To be created
+  const { login } = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      // Replace with actual API call using a service
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, { email, password });
       console.log('Login successful:', response.data);
-      // login(response.data.token, response.data.user); // Call context login function
-      localStorage.setItem('token', response.data.token); // Simple token storage
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      login(response.data.user, response.data.token); // Use context's login function
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.msg || 'Login failed. Please check your credentials.');

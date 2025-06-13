@@ -58,7 +58,7 @@ const MemberTrainingHistoryPage = () => {
   if (error) {
     return (
       <div>
-        <Link to="/member/dashboard" style={{ display: 'inline-block', marginBottom: '20px', padding: '10px 15px', backgroundColor: '#6c757d', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
+        <Link to="/dashboard" style={{ display: 'inline-block', marginBottom: '20px', padding: '10px 15px', backgroundColor: '#6c757d', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
           &larr; Back to Dashboard
         </Link>
         <p style={{ color: 'red' }}>{error}</p>
@@ -69,7 +69,7 @@ const MemberTrainingHistoryPage = () => {
   if (history.length === 0 && !error) { // Ensure error isn't also shown
     return (
       <div>
-        <Link to="/member/dashboard" style={{ display: 'inline-block', marginBottom: '20px', padding: '10px 15px', backgroundColor: '#6c757d', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
+        <Link to="/dashboard" style={{ display: 'inline-block', marginBottom: '20px', padding: '10px 15px', backgroundColor: '#6c757d', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
           &larr; Back to Dashboard
         </Link>
         <p>No training history found.</p>
@@ -79,7 +79,7 @@ const MemberTrainingHistoryPage = () => {
 
   return (
     <div>
-      <Link to="/member/dashboard" style={{ display: 'inline-block', marginBottom: '20px', padding: '10px 15px', backgroundColor: '#6c757d', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
+      <Link to="/dashboard" style={{ display: 'inline-block', marginBottom: '20px', padding: '10px 15px', backgroundColor: '#6c757d', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
         &larr; Back to Dashboard
       </Link>
       <h2>My Training History</h2>
