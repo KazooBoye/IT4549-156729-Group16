@@ -1,0 +1,45 @@
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #333;
+  color: white;
+}
+
+.app-header a {
+  color: white;
+  text-decoration: none;
+  margin: 0 0.5rem;
+}
+
+.app-header a:hover {
+  text-decoration: underline;
+}
+
+.logo a {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.main-nav a, .auth-nav a, .auth-nav .user-greeting {
+  margin-left: 15px;
+}
+
+.logout-button {
+  background-color: #d9534f;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 15px;
+}
+
+.logout-button:hover {
+  background-color: #c9302c;
+}
+
+.user-greeting {
+  font-style: italic;
+}
