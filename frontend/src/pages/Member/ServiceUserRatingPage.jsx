@@ -1,207 +1,173 @@
 import React, { useState, useContext } from 'react';
-import { Link } from 'react-router-dom';
-import AuthContext from '../../contexts/AuthContext';
 import axios from 'axios';
+import AuthContext from '../../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
-const CATEGORIES = [
-  {
-    key: 'gymService',
-    label: 'Dịch vụ phòng tập',
-    description: 'Dịch vụ hỗ trợ, tư vấn, chăm sóc khách hàng',
-    requireComment: true,
-    commentMaxWords: 1000,
-  },
-  {
-    key: 'equipment',
-    label: 'Thiết bị tập',
-    description: '',
-    requireComment: true,
-    commentMaxWords: 1000,
-  },
-  {
-    key: 'trainer',
-    label: 'Huấn luyện viên',
-    description: '',
-    requireComment: true,
-    commentMaxWords: 1000,
-  },
-  {
-    key: 'staff',
-    label: 'Nhân viên',
-    description: 'Nhân viên lễ tân, tư vấn',
-    requireComment: true,
-    commentMaxWords: 1000,
-  },
-];
+// This is the detailed rating component that appears when a category is selected.
+const RatingComponent = ({ title, onDataChange }) => {
+  const [rating, setRating] = useState(0);
+  const [comments, setComments] = useState('');
 
-const initialRatings = CATEGORIES.reduce((acc, cat) => {
-  acc[cat.key] = 5;
-  return acc;
-}, {});
-const initialComments = CATEGORIES.reduce((acc, cat) => {
-  acc[cat.key] = '';
-  return acc;
-}, {});
+  // When rating or comments change, call the parent's handler
+  const handleChange = (newRating, newComments) => {
+    if (newRating !== undefined) setRating(newRating);
+    if (newComments !== undefined) setComments(newComments);
+    // Pass the complete state up to the parent
+    onDataChange({
+      rating: newRating !== undefined ? newRating : rating,
+      comments: newComments !== undefined ? newComments : comments,
+    });
+  };
 
-const ServiceUserRatingPage = () => {
-  const { user, token } = useContext(AuthContext);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [ratings, setRatings] = useState(initialRatings);
-  const [comments, setComments] = useState(initialComments);
+  return (
+    <div style={{ border: '1px solid #e0e0e0', padding: '15px', marginTop: '0.5rem', borderRadius: '8px', background: '#fafafa' }}>
+      <h5>{title}</h5>
+      <div>
+        <strong>Rating:</strong>
+        {[1, 2, 3, 4, 5].map(star => (
+          <span
+            key={star}
+            onClick={() => handleChange(star, undefined)}
+            style={{ cursor: 'pointer', color: star <= rating ? 'gold' : 'grey', fontSize: '1.5rem', marginLeft: '5px' }}
+          >
+            ★
+          </span>
+        ))}
+      </div>
+      <textarea
+        placeholder="Your comments..."
+        value={comments}
+        onChange={(e) => handleChange(undefined, e.target.value)}
+        rows="3"
+        style={{ width: '100%', marginTop: '10px' }}
+        required
+      />
+    </div>
+  );
+};
+
+
+const SubmitFeedbackPage = () => {
+  // State to hold the data for the selected categories
+  const [feedbackData, setFeedbackData] = useState({});
+  // State to track which checkboxes are checked
+  const [activeCategories, setActiveCategories] = useState({});
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const auth = useContext(AuthContext);
 
-  const handleCategoryChange = (key) => {
-    setSelectedCategory(key);
+  const feedbackCategories = [
+    { key: 'WorkoutServices', title: 'Dịch vụ phòng tập (Workout Services)' },
+    { key: 'Equipment', title: 'Thiết bị tập (Equipment)' },
+    { key: 'Trainers', title: 'Huấn luyện viên (Trainers)' },
+    { key: 'Staff', title: 'Nhân viên (Staff)' },
+  ];
+
+  // This function is called when a checkbox is clicked
+  const handleCategoryToggle = (categoryKey) => {
+    const newActiveState = { ...activeCategories, [categoryKey]: !activeCategories[categoryKey] };
+    setActiveCategories(newActiveState);
+
+    // If a category is unchecked, remove its data to prevent submission
+    if (!newActiveState[categoryKey]) {
+      const newFeedbackData = { ...feedbackData };
+      delete newFeedbackData[categoryKey];
+      setFeedbackData(newFeedbackData);
+    }
   };
 
-  const handleRatingChange = (key, value) => {
-    setRatings((prev) => ({ ...prev, [key]: value }));
+  // This function is called by the child RatingComponent when its data changes
+  const handleFeedbackDataChange = (categoryKey, data) => {
+    setFeedbackData(prev => ({ ...prev, [categoryKey]: data }));
   };
 
-  const handleCommentChange = (key, value) => {
-    setComments((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const countWords = (str) => str.trim().split(/\s+/).filter(Boolean).length;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     setError('');
     setSuccess('');
 
-    if (!selectedCategory) {
-      setError('Vui lòng chọn một đối tượng để đánh giá.');
+    // Filter out only the data for active categories
+    const feedbackPayload = Object.entries(feedbackData)
+      .filter(([key]) => activeCategories[key])
+      .map(([key, value]) => ({
+        feedbackType: key,
+        rating: value.rating,
+        comments: value.comments,
+      }));
+
+    if (feedbackPayload.length === 0) {
+      setError('Please select at least one category to provide feedback.');
+      setIsSubmitting(false);
       return;
     }
 
-    const cat = CATEGORIES.find((c) => c.key === selectedCategory);
-    if (!ratings[selectedCategory]) {
-      setError(`Vui lòng đánh giá sao cho "${cat.label}".`);
-      return;
-    }
-    if (cat.requireComment) {
-      const comment = comments[selectedCategory].trim();
-      if (!comment) {
-        setError(`Vui lòng nhập nhận xét cho "${cat.label}".`);
+    if (feedbackPayload.some(f => !f.rating || !f.comments)) {
+        setError('Please provide a rating and comments for all selected categories.');
+        setIsSubmitting(false);
         return;
-      }
-      if (countWords(comment) > cat.commentMaxWords) {
-        setError(`Nhận xét cho "${cat.label}" không được vượt quá ${cat.commentMaxWords} từ.`);
-        return;
-      }
     }
 
     try {
-      // Send to backend
-      await axios.post(
-        `${process.env.REACT_APP_API_URL}/feedback`,
-        {
-          userId: user?.id,
-          category: selectedCategory,
-          rating: ratings[selectedCategory],
-          comment: comments[selectedCategory],
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+      const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+      
+      await Promise.all(
+        feedbackPayload.map(feedbackItem => 
+            axios.post(`${process.env.REACT_APP_API_URL}/feedback`, feedbackItem, config)
+        )
       );
-      setSuccess('Cảm ơn bạn đã gửi đánh giá!');
-      setSelectedCategory('');
-      setRatings(initialRatings);
-      setComments(initialComments);
+      
+      setSuccess('Thank you for your feedback!');
+      setFeedbackData({});
+      setActiveCategories({});
+
     } catch (err) {
-      setError(err.response?.data?.msg || 'Không thể gửi đánh giá. Vui lòng thử lại sau.');
+      setError(err.response?.data?.msg || 'An error occurred while submitting feedback.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const renderStarRating = (key, value) => (
-    <div className="star-rating">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <span
-          key={star}
-          onClick={() => handleRatingChange(key, star)}
-          style={{
-            cursor: 'pointer',
-            fontSize: '24px',
-            color: star <= value ? '#ffd700' : '#ccc',
-            marginRight: '5px',
-          }}
-        >
-          ★
-        </span>
-      ))}
-    </div>
-  );
-
   return (
     <div>
-      <Link to="/dashboard" style={{ display: 'inline-block', marginBottom: '20px', padding: '10px 15px', backgroundColor: '#6c757d', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
-        &larr; Back to Dashboard
-      </Link>
-      <h2>Đánh giá chất lượng dịch vụ</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {success && <p style={{ color: 'green' }}>{success}</p>}
+      <Link to="/dashboard">← Back to Dashboard</Link>
+      <h2 style={{marginTop: '1rem'}}>Đánh giá chất lượng dịch vụ</h2>
+      <p>Select the categories you would like to rate.</p>
+      
+      {error && <p style={{ color: 'red', border: '1px solid red', padding: '10px' }}>{error}</p>}
+      {success && <p style={{ color: 'green', border: '1px solid green', padding: '10px' }}>{success}</p>}
+
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '20px' }}>
-          <strong>Chọn đối tượng muốn đánh giá:</strong>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginTop: '10px' }}>
-            {CATEGORIES.map((cat) => (
-              <label key={cat.key} style={{ minWidth: '200px', cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  name="category"
-                  checked={selectedCategory === cat.key}
-                  onChange={() => handleCategoryChange(cat.key)}
-                  style={{ marginRight: '8px' }}
-                />
-                {cat.label}
-                {cat.description && <span style={{ color: '#888', fontSize: '0.9em', marginLeft: '5px' }}>({cat.description})</span>}
-              </label>
-            ))}
+        {feedbackCategories.map(({ key, title }) => (
+          <div key={key} style={{ marginBottom: '1rem' }}>
+            <label>
+              <input
+                type="checkbox"
+                checked={!!activeCategories[key]}
+                onChange={() => handleCategoryToggle(key)}
+              />
+              <strong style={{ marginLeft: '8px' }}>{title}</strong>
+            </label>
+            {/* Conditionally render the rating component */}
+            {activeCategories[key] && (
+              <RatingComponent
+                title={title}
+                onDataChange={(data) => handleFeedbackDataChange(key, data)}
+              />
+            )}
           </div>
-        </div>
-        {selectedCategory && (() => {
-          const cat = CATEGORIES.find((c) => c.key === selectedCategory);
-          return (
-            <div key={cat.key} style={{ marginBottom: '30px', border: '1px solid #eee', borderRadius: '8px', padding: '15px' }}>
-              <h4 style={{ marginBottom: '10px' }}>{cat.label}</h4>
-              {renderStarRating(cat.key, ratings[cat.key])}
-              {cat.requireComment && (
-                <div style={{ marginTop: '10px' }}>
-                  <label htmlFor={`comment-${cat.key}`}>Nhận xét (bắt buộc, tối đa {cat.commentMaxWords} từ):</label>
-                  <textarea
-                    id={`comment-${cat.key}`}
-                    value={comments[cat.key]}
-                    onChange={(e) => handleCommentChange(cat.key, e.target.value)}
-                    rows="4"
-                    style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-                    placeholder={`Nhập nhận xét cho ${cat.label}...`}
-                  />
-                  <div style={{ fontSize: '0.9em', color: countWords(comments[cat.key]) > cat.commentMaxWords ? 'red' : '#888' }}>
-                    {countWords(comments[cat.key])} / {cat.commentMaxWords} từ
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })()}
-        <button
-          type="submit"
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
-          Gửi đánh giá
+        ))}
+        
+        <button type="submit" disabled={isSubmitting} style={{marginTop: '1rem'}}>
+          {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
         </button>
       </form>
     </div>
   );
 };
 
-export default ServiceUserRatingPage; 
+export default SubmitFeedbackPage;

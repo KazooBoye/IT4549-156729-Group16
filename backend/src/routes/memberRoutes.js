@@ -13,4 +13,16 @@ router.post(
     memberController.registerMember
 );
 
+// @route   POST /api/members/extend-subscription
+// @desc    Extend an existing member's subscription
+// @access  Private to staff/owner
+router.post(
+    '/extend-subscription',
+    protect, // User must be logged in
+    authorize('staff', 'owner'), // Only specific roles can access this
+    memberController.extendSubscription
+);
+
+
 module.exports = router;
+
