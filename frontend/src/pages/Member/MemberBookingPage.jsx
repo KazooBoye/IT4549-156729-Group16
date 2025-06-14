@@ -4,64 +4,61 @@ import axios from 'axios';
 import AuthContext from '../../contexts/AuthContext';
 
 const MemberBookingPage = () => {
-  const { user, token } = useContext(AuthContext);
+  // 1. CORRECTED: Get auth object from context correctly
+  const { auth } = useContext(AuthContext); 
+  
   const [trainers, setTrainers] = useState([]);
   const [bookings, setBookings] = useState([]);
-  const [isLoadingTrainers, setIsLoadingTrainers] = useState(false);
-  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
+  const [isLoadingTrainers, setIsLoadingTrainers] = useState(true);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(true);
 
   const [selectedTrainerId, setSelectedTrainerId] = useState('');
   const [sessionDateTime, setSessionDateTime] = useState('');
-  const [durationMinutes, setDurationMinutes] = useState(60); // Default duration
+  const [durationMinutes, setDurationMinutes] = useState(60);
   const [notes, setNotes] = useState('');
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Fetch available trainers
+  // Fetch available trainers and existing bookings
   useEffect(() => {
+    // We can't fetch anything if we're not logged in.
+    if (!auth || !auth.token) {
+      setIsLoadingTrainers(false);
+      setIsLoadingBookings(false);
+      return;
+    }
+
     const fetchTrainers = async () => {
-      if (!token) {
-        // setError('Authentication token not found. Cannot fetch trainers.'); // Optional: more specific error
-        return;
-      }
       setIsLoadingTrainers(true);
       try {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/users/trainers`, {
-          headers: { 'x-auth-token': token }, // Ensure your backend authMiddleware expects 'x-auth-token'
-        });
-        // console.log('Fetched trainers:', res.data); // Good place for debugging
-        setTrainers(res.data); // Expects res.data to be an array like [{user_id: 1, full_name: "Trainer Name"}, ...]
+        // 2. CORRECTED: Use 'Authorization: Bearer <token>' header
+        const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/users/trainers`, config);
+        setTrainers(res.data);
       } catch (err) {
         setError(err.response?.data?.msg || 'Failed to fetch trainers.');
-        console.error('Error fetching trainers from frontend:', err);
       } finally {
         setIsLoadingTrainers(false);
       }
     };
+
+    const fetchBookings = async () => {
+      setIsLoadingBookings(true);
+      try {
+        const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/bookings/member`, config);
+        setBookings(res.data);
+      } catch (err) {
+        setError(err.response?.data?.msg || 'Failed to fetch your bookings.');
+      } finally {
+        setIsLoadingBookings(false);
+      }
+    };
+
     fetchTrainers();
-  }, [token]);
-
-  // Fetch member's existing bookings
-  const fetchBookings = async () => {
-    if (!token) return;
-    setIsLoadingBookings(true);
-    try {
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/bookings/member`, {
-        headers: { 'x-auth-token': token },
-      });
-      setBookings(res.data);
-    } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to fetch your bookings.');
-      console.error(err);
-    } finally {
-      setIsLoadingBookings(false);
-    }
-  };
-
-  useEffect(() => {
     fetchBookings();
-  }, [token]);
+  }, [auth]); // This effect runs once `auth` is available.
 
 
   const handleBookingSubmit = async (e) => {
@@ -69,12 +66,7 @@ const MemberBookingPage = () => {
     setError('');
     setSuccess('');
     if (!selectedTrainerId || !sessionDateTime) {
-      setError('Please select a trainer and session date/time.');
-      return;
-    }
-    if (!token) {
-        setError('Authentication error. Please log in again.');
-        return;
+      return setError('Please select a trainer and session date/time.');
     }
 
     try {
@@ -84,30 +76,23 @@ const MemberBookingPage = () => {
         duration_minutes: parseInt(durationMinutes),
         notes_member: notes,
       };
-      await axios.post(`${process.env.REACT_APP_API_URL}/bookings`, bookingData, {
-        headers: { 'x-auth-token': token },
-      });
+      // 3. CORRECTED: Use 'Authorization: Bearer <token>' header
+      const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+      await axios.post(`${process.env.REACT_APP_API_URL}/bookings`, bookingData, config);
+      
       setSuccess('Booking successful!');
+      // Reset form and re-fetch bookings
       setSelectedTrainerId('');
       setSessionDateTime('');
-      setDurationMinutes(60);
       setNotes('');
-      fetchBookings(); // Refresh bookings list
+      // Manually trigger a re-fetch of bookings
+      const bookingRes = await axios.get(`${process.env.REACT_APP_API_URL}/bookings/member`, config);
+      setBookings(bookingRes.data);
+
     } catch (err) {
       setError(err.response?.data?.msg || 'Booking failed. Please try again.');
-      console.error(err);
     }
   };
-
-  const formatLocalDateTime = (isoString) => {
-    if (!isoString) return 'N/A';
-    const date = new Date(isoString);
-    return date.toLocaleString('vi-VN', {
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', hour12: false
-    });
-  };
-
 
   return (
     <div>

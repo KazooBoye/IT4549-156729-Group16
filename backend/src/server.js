@@ -14,6 +14,8 @@ const feedbackRoutes = require('./routes/feedbackRoutes');
 const serviceHistoryRoutes = require('./routes/serviceHistoryRoutes');
 const paymentRoutes = require('./routes/paymentRoutes'); 
 const packageRoutes = require('./routes/packageRoutes');
+const userRoutes = require('./routes/userRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
 
 
 const app = express();
@@ -36,6 +38,8 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/service-history', serviceHistoryRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/packages', packageRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 const PORT = process.env.PORT || 5001; // Using 5001 as seen in previous logs
 

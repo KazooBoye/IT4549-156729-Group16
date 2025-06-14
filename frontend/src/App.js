@@ -19,7 +19,7 @@ import MemberTrainingHistoryPage from './pages/Member/MemberTrainingHistoryPage'
 import ServiceUserRatingPage from './pages/Member/ServiceUserRatingPage';
 import MemberBookingPage from './pages/Member/MemberBookingPage';
 // Package Page (can be public or private depending on requirements)
-import ViewPackagesPage from './pages/Packages/ViewPackagesPage';
+import ViewPackagesPage from './pages/Member/ViewPackagesPage';
 
 // New pages
 import OwnerEquipmentStatusPage from './pages/Owner/OwnerEquipmentStatusPage';
