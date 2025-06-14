@@ -1,4 +1,4 @@
-Bài tập lớn Kĩ thuật phần mềm Nhóm 18 Thành viên:
+Bài tập lớn Phát triển phần mềm theo chuẩn ITSS Nhóm 16. Thành viên:
 
     Nguyễn Mạnh Quân - 20225758 - Nhóm trưởng
     Cao Đức Anh - 20225781
