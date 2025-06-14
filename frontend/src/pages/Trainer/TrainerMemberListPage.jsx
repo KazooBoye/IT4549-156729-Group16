@@ -88,7 +88,13 @@ const TrainerMemberListPage = () => {
       setResult('Thêm học viên thành công!');
     } else if (formType === 'edit' && selectedMember) {
       // Replace with real API call
-      setMembers(prev => prev.map(m => m.id === selectedMember.id ? { ...m, ...form } : m));
+      // Ensure email and name are not updated from form if they were disabled
+      const updatedMemberData = {
+        ...form,
+        email: selectedMember.email, // Keep original email
+        name: selectedMember.name,   // Keep original name
+      };
+      setMembers(prev => prev.map(m => m.id === selectedMember.id ? { ...m, ...updatedMemberData } : m));
       setResult('Cập nhật học viên thành công!');
     }
     setShowForm(false);
@@ -163,6 +169,7 @@ const TrainerMemberListPage = () => {
             value={form.email}
             onChange={handleChange}
             required
+            disabled={formType === 'edit'}
             style={{ width: '100%', padding: 8, marginTop: 4, marginBottom: 16 }}
             placeholder="hv00234@gmail.com"
           />
@@ -173,6 +180,7 @@ const TrainerMemberListPage = () => {
             value={form.name}
             onChange={handleChange}
             required
+            disabled={formType === 'edit'}
             style={{ width: '100%', padding: 8, marginTop: 4, marginBottom: 16 }}
             placeholder="Đỗ Tuấn Minh"
           />
@@ -247,4 +255,4 @@ const TrainerMemberListPage = () => {
   );
 };
 
-export default TrainerMemberListPage; 
+export default TrainerMemberListPage;

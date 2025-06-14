@@ -108,9 +108,12 @@ CREATE TABLE workout_sessions (
     subscription_id INTEGER REFERENCES member_subscriptions(subscription_id) ON DELETE SET NULL, -- Link to the specific subscription used
     check_in_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     check_out_time TIMESTAMP WITH TIME ZONE,
-    activity_type VARCHAR(100), -- e.g., 'general_gym', 'yoga_class', 'personal_training'
-    notes TEXT,
-    recorded_by_user_id INTEGER REFERENCES users(user_id) -- Staff or trainer who recorded, if applicable
+    activity_type VARCHAR(100), -- e.g., 'general_gym', 'yoga_class', 'personal_training', (Loại buổi tập)
+    notes TEXT, -- General notes about the session
+    recorded_by_user_id INTEGER REFERENCES users(user_id), -- Staff or trainer who recorded, if applicable (Huấn luyện viên)
+    session_name VARCHAR(255) NULL, -- (Tên buổi tập)
+    completion_percentage INTEGER NULL CHECK (completion_percentage >= 0 AND completion_percentage <= 100), -- (Mức độ tham gia - percentage)
+    trainer_notes_on_completion TEXT NULL -- (Mức độ tham gia - Huấn luyện viên nhận xét)
 );
 
 -- Personal Training Bookings Table

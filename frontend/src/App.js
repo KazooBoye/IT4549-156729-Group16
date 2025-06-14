@@ -28,6 +28,7 @@ import StaffRenewPackagePage from './pages/Staff/StaffRenewPackagePage';
 import StaffFeedbackManagementPage from './pages/Staff/StaffFeedbackManagementPage';
 import StaffMemberServiceHistoryPage from './pages/Staff/StaffMemberServiceHistoryPage';
 import TrainerMemberListPage from './pages/Trainer/TrainerMemberListPage';
+import TrainerMemberProgressPage from './pages/Trainer/TrainerMemberProgressPage'; // Import the new page
 
 import './App.css';
 
@@ -91,6 +92,11 @@ function App() {
               <Route path="/trainer/my-members" element={
                 <PrivateRoute allowedRoles={['trainer', 'owner']}>
                   <TrainerMemberListPage />
+                </PrivateRoute>
+              } />
+              <Route path="/trainer/member-progress" element={
+                <PrivateRoute allowedRoles={['trainer', 'owner']}>
+                  <TrainerMemberProgressPage />
                 </PrivateRoute>
               } />
 
