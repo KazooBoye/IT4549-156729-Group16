@@ -46,16 +46,16 @@ const SimulatedPaymentForm = ({ packageId, packagePrice, onPaymentSuccess, onPay
   return (
     <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '8px' }}>
       <h3>Simulated Payment</h3>
-      <p>Paying ${packagePrice} for Package ID: {packageId}</p>
+      <p>Paying {packagePrice}VND for Package ID: {packageId}</p>
       <form onSubmit={handleSubmit}>
         {/* These fields are purely for visual effect */}
         <div>
-          <label>Fake Card Number</label>
-          <input type="text" placeholder="**** **** **** 4242" disabled style={{ width: '100%', margin: '5px 0' }} />
+          <label>Card Number</label>
+          <input type="text" placeholder="**** **** **** 4242" style={{ width: '100%', margin: '5px 0' }} />
         </div>
         <div>
-          <label>Fake CVV</label>
-          <input type="text" placeholder="123" disabled style={{ width: '100px', margin: '5px 0' }} />
+          <label>CVV</label>
+          <input type="text" placeholder="123" style={{ width: '100px', margin: '5px 0' }} />
         </div>
 
         <div style={{ margin: '15px 0' }}>

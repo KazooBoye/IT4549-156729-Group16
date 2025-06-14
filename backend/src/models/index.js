@@ -1,43 +1,58 @@
-const sequelize = require('../config/db');
-const User = require('./User');
-const Profile = require('./Profile');
-const Equipment = require('./Equipment'); // Assuming you have this model too
+'use strict';
 
+const fs = require('fs');
+const path = require('path');
+const Sequelize = require('sequelize');
+const process = require('process');
+const basename = path.basename(__filename);
+const sequelize = require('../config/db'); // Your custom db config import
 const db = {};
 
+// Read all model files from the current directory, excluding this index file
+fs
+  .readdirSync(__dirname)
+  .filter(file => {
+    return (
+      file.indexOf('.') !== 0 &&
+      file !== basename &&
+      file.slice(-3) === '.js' &&
+      file.indexOf('.test.js') === -1
+    );
+  })
+  .forEach(file => {
+    // Import each model file and initialize it with sequelize
+    const model = require(path.join(__dirname, file));
+    db[model.name] = model;
+  });
+
+// Run the associate function for each model, if it exists
+Object.keys(db).forEach(modelName => {
+  if (db[modelName].associate) {
+    db[modelName].associate(db);
+  }
+});
+
 db.sequelize = sequelize;
-db.Sequelize = require('sequelize');
+db.Sequelize = Sequelize;
 
-// --- EXPORT MODELS ---
-db.User = User;
-db.Profile = Profile;
-db.Equipment = Equipment;
-db.MembershipPackage = MembershipPackage;
-db.MemberSubscription = MemberSubscription;
+// --- NOW, MANUALLY DEFINE THE ASSOCIATIONS ---
+// This provides a clear, single place to see all relationships.
 
+const { User, Profile, MemberSubscription, MembershipPackage, Equipment } = db;
 
-// --- DEFINE ASSOCIATIONS HERE ---
+// User <-> Profile
+User.hasOne(Profile, { foreignKey: 'user_id', as: 'Profile' });
+Profile.belongsTo(User, { foreignKey: 'user_id' });
 
-// A User has one Profile. The link is the 'user_id' field in the Profile table.
-User.hasOne(Profile, {
-  foreignKey: 'user_id',
-  as: 'Profile' // Optional: creates an alias to use in includes
-});
-
-// A Profile belongs to one User.
-Profile.belongsTo(User, {
-  foreignKey: 'user_id'
-});
-
-// Add other associations here if needed in the future
-
-// A User can have many subscriptions
+// User <-> MemberSubscription
 User.hasMany(MemberSubscription, { foreignKey: 'member_user_id' });
 MemberSubscription.belongsTo(User, { foreignKey: 'member_user_id' });
 
-// A Package can be part of many subscriptions
+// MembershipPackage <-> MemberSubscription
 MembershipPackage.hasMany(MemberSubscription, { foreignKey: 'package_id' });
 MemberSubscription.belongsTo(MembershipPackage, { foreignKey: 'package_id' });
+
+// You can add more associations here...
 
 
 module.exports = db;

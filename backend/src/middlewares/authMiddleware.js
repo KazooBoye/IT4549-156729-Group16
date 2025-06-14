@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const pool = require('../config/db');
+const { User } = require('../models'); // <-- Use the Sequelize User model
 
 const protect = async (req, res, next) => {
   let token;
@@ -9,12 +9,15 @@ const protect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
-      // Get user from the token payload (excluding password)
-      const userResult = await pool.query('SELECT user_id, email, role FROM users WHERE user_id = $1', [decoded.user.id]);
-      if (userResult.rows.length === 0) {
+      // Use Sequelize to find the user
+      req.user = await User.findByPk(decoded.user.id, {
+        attributes: ['user_id', 'email', 'role'] // Exclude password_hash
+      });
+
+      if (!req.user) {
           return res.status(401).json({ msg: 'Not authorized, user not found' });
       }
-      req.user = userResult.rows[0];
+      
       next();
     } catch (error) {
       console.error('Token verification error:', error);

@@ -1,124 +1,142 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useContext } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
+import AuthContext from '../../contexts/AuthContext'; // Assuming you have this for the token
 
 const StaffRegisterMemberPage = () => {
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     fullName: '',
-    dob: '',
-    phone: '',
-    email: '',
+    dateOfBirth: '',
+    phoneNumber: '',
+    email: '', // Optional
   });
-  const [result, setResult] = useState(null);
+  
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(null); // Will hold the new member's details
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { auth } = useContext(AuthContext); // Get token from context
 
-  const validate = () => {
-    if (!form.fullName.trim()) return 'Họ tên là bắt buộc.';
-    if (/[^a-zA-ZÀ-ỹ\s]/.test(form.fullName)) return 'Họ tên không chứa ký tự đặc biệt.';
-    if (!form.dob) return 'Ngày sinh là bắt buộc.';
-    if (isNaN(Date.parse(form.dob)) || new Date(form.dob) > new Date()) return 'Ngày sinh không hợp lệ.';
-    if (!/^\d{10}$/.test(form.phone)) return 'Số điện thoại phải đúng định dạng 10 số.';
-    if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) return 'Email không hợp lệ.';
-    return '';
+  const { fullName, dateOfBirth, phoneNumber, email } = formData;
+
+  const onChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setError('');
-    setResult(null);
-  };
-
-  const handleSubmit = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     setError('');
-    setResult(null);
-    const errMsg = validate();
-    if (errMsg) {
-      setError(errMsg);
+    setSuccess(null);
+
+    // Basic validation
+    if (!fullName || !phoneNumber) {
+      setError('Full Name and Phone Number are required.');
+      setIsSubmitting(false);
       return;
     }
-    setIsSubmitting(true);
+
     try {
-      const res = await axios.post(`${process.env.REACT_APP_API_URL}/members/register`, form);
-      setResult(res.data);
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${auth.token}`, // Send the staff member's token
+        },
+      };
+
+      const body = JSON.stringify(formData);
+      
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/members/register`, body, config);
+      
+      // On success, store the returned member info to display it
+      setSuccess(res.data);
+      // Clear the form for the next registration
+      setFormData({
+        fullName: '',
+        dateOfBirth: '',
+        phoneNumber: '',
+        email: '',
+      });
+
     } catch (err) {
-      setError(err.response?.data?.msg || 'Đăng ký thất bại.');
+      setError(err.response?.data?.msg || 'An unexpected server error occurred.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // If a member was just successfully registered, show their details
+  if (success) {
+    return (
+      <div style={{ padding: '20px', border: '1px solid green', borderRadius: '8px' }}>
+        <h2>✅ {success.msg}</h2>
+        <p>Please provide the following login credentials to the new member.</p>
+        <div style={{ background: '#f0f0f0', padding: '15px', marginTop: '10px' }}>
+          <p><strong>Full Name:</strong> {success.member.fullName}</p>
+          <p><strong>Login Email/Username:</strong> {success.member.loginUsername}</p>
+          <p><strong>Temporary Password:</strong> <strong style={{color: 'blue', fontSize: '1.2rem'}}>{success.member.temporaryPassword}</strong></p>
+        </div>
+        <button onClick={() => setSuccess(null)} style={{marginTop: '20px'}}>
+          Register Another Member
+        </button>
+      </div>
+    );
+  }
+
+  // Otherwise, show the registration form
   return (
     <div>
-      <Link to="/dashboard" style={{ display: 'inline-block', marginBottom: '20px', padding: '10px 15px', backgroundColor: '#6c757d', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
-        &larr; Back to Dashboard
-      </Link>
-      <h2>Đăng ký hội viên mới</h2>
-      <form onSubmit={handleSubmit} style={{ maxWidth: 500, margin: '0 auto', background: '#f9f9f9', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px #eee' }}>
-        <div style={{ marginBottom: 16 }}>
-          <label htmlFor="fullName" style={{ fontWeight: 500 }}>Họ tên:</label>
+      <Link to="/dashboard">← Back to Dashboard</Link>
+      <h2 style={{marginTop: '1rem'}}>Đăng ký hội viên mới</h2>
+      <p>Enter the new member's details below. A temporary password will be generated.</p>
+      
+      {error && <p style={{ color: 'red', border: '1px solid red', padding: '10px' }}>{error}</p>}
+
+      <form onSubmit={onSubmit}>
+        <div>
+          <label>Họ tên:</label>
           <input
-            id="fullName"
+            type="text"
             name="fullName"
-            value={form.fullName}
-            onChange={handleChange}
+            value={fullName}
+            onChange={onChange}
             required
-            style={{ width: '100%', padding: 8, marginTop: 4 }}
-            placeholder="Nguyễn Văn B"
           />
         </div>
-        <div style={{ marginBottom: 16 }}>
-          <label htmlFor="dob" style={{ fontWeight: 500 }}>Ngày sinh:</label>
+        <div>
+          <label>Ngày sinh:</label>
           <input
-            id="dob"
-            name="dob"
             type="date"
-            value={form.dob}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: 8, marginTop: 4 }}
+            name="dateOfBirth"
+            value={dateOfBirth}
+            onChange={onChange}
           />
         </div>
-        <div style={{ marginBottom: 16 }}>
-          <label htmlFor="phone" style={{ fontWeight: 500 }}>Số điện thoại:</label>
+        <div>
+          <label>Số điện thoại:</label>
           <input
-            id="phone"
-            name="phone"
-            value={form.phone}
-            onChange={handleChange}
+            type="tel"
+            name="phoneNumber"
+            value={phoneNumber}
+            onChange={onChange}
             required
-            style={{ width: '100%', padding: 8, marginTop: 4 }}
-            placeholder="0912345678"
           />
         </div>
-        <div style={{ marginBottom: 16 }}>
-          <label htmlFor="email" style={{ fontWeight: 500 }}>Email (tùy chọn):</label>
+        <div>
+          <label>Email (tùy chọn):</label>
           <input
-            id="email"
+            type="email"
             name="email"
-            value={form.email}
-            onChange={handleChange}
-            style={{ width: '100%', padding: 8, marginTop: 4 }}
-            placeholder="abc@gmail.com"
+            value={email}
+            onChange={onChange}
           />
         </div>
-        <button type="submit" disabled={isSubmitting} style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-          {isSubmitting ? 'Đang đăng ký...' : 'Đăng ký'}
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Registering...' : 'Đăng ký'}
         </button>
       </form>
-      {error && (
-        <div style={{ marginTop: 24, color: 'red', fontWeight: 500, textAlign: 'center' }}>{error}</div>
-      )}
-      {result && (
-        <div style={{ marginTop: 24, color: 'green', fontWeight: 500, textAlign: 'center' }}>
-          <div>Đăng ký thành công!</div>
-          <div><strong>Mã hội viên:</strong> {result.memberCode}</div>
-          <div><strong>Tài khoản đăng nhập:</strong> {result.username} / {result.password}</div>
-        </div>
-      )}
     </div>
   );
 };
 
-export default StaffRegisterMemberPage; 
+export default StaffRegisterMemberPage;
