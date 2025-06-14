@@ -38,7 +38,7 @@ db.Sequelize = Sequelize;
 // --- NOW, MANUALLY DEFINE THE ASSOCIATIONS ---
 // This provides a clear, single place to see all relationships.
 
-const { User, Profile, MemberSubscription, MembershipPackage, Equipment } = db;
+const { User, Profile, MemberSubscription, MembershipPackage, Equipment, Feedback, PersonalTrainingBooking} = db;
 
 // User <-> Profile
 User.hasOne(Profile, { foreignKey: 'user_id', as: 'Profile' });
@@ -55,6 +55,19 @@ MemberSubscription.belongsTo(MembershipPackage, { foreignKey: 'package_id' });
 // A User (member) can submit many feedback items.
 db.User.hasMany(db.Feedback, { foreignKey: 'member_user_id', as: 'SubmittedFeedback' });
 db.Feedback.belongsTo(db.User, { foreignKey: 'member_user_id', as: 'SubmittingMember' });
+
+// 2. Add the crucial new associations for bookings
+// A booking belongs to a member (a User)
+PersonalTrainingBooking.belongsTo(User, {
+  foreignKey: 'member_user_id',
+  as: 'Member' // Alias to use when fetching the member who booked
+});
+
+// A booking also belongs to a trainer (who is also a User)
+PersonalTrainingBooking.belongsTo(User, {
+  foreignKey: 'trainer_user_id',
+  as: 'Trainer' // A DIFFERENT alias is required to distinguish the two relationships
+});
 
 // You can add more associations here...
 

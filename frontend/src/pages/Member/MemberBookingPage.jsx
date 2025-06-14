@@ -4,8 +4,8 @@ import axios from 'axios';
 import AuthContext from '../../contexts/AuthContext';
 
 const MemberBookingPage = () => {
-  // 1. CORRECTED: Get auth object from context correctly
-  const { auth } = useContext(AuthContext); 
+  // --- FIX 1: Get auth object from context correctly ---
+  const auth = useContext(AuthContext); 
   
   const [trainers, setTrainers] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -22,18 +22,18 @@ const MemberBookingPage = () => {
 
   // Fetch available trainers and existing bookings
   useEffect(() => {
-    // We can't fetch anything if we're not logged in.
     if (!auth || !auth.token) {
       setIsLoadingTrainers(false);
       setIsLoadingBookings(false);
       return;
     }
 
+    const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+
     const fetchTrainers = async () => {
       setIsLoadingTrainers(true);
       try {
-        // 2. CORRECTED: Use 'Authorization: Bearer <token>' header
-        const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+        // --- FIX 2: Use correct 'Authorization' header ---
         const res = await axios.get(`${process.env.REACT_APP_API_URL}/users/trainers`, config);
         setTrainers(res.data);
       } catch (err) {
@@ -46,7 +46,7 @@ const MemberBookingPage = () => {
     const fetchBookings = async () => {
       setIsLoadingBookings(true);
       try {
-        const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+        // --- FIX 2: Use correct 'Authorization' header ---
         const res = await axios.get(`${process.env.REACT_APP_API_URL}/bookings/member`, config);
         setBookings(res.data);
       } catch (err) {
@@ -58,7 +58,7 @@ const MemberBookingPage = () => {
 
     fetchTrainers();
     fetchBookings();
-  }, [auth]); // This effect runs once `auth` is available.
+  }, [auth]);
 
 
   const handleBookingSubmit = async (e) => {
@@ -76,16 +76,15 @@ const MemberBookingPage = () => {
         duration_minutes: parseInt(durationMinutes),
         notes_member: notes,
       };
-      // 3. CORRECTED: Use 'Authorization: Bearer <token>' header
+      // --- FIX 2: Use correct 'Authorization' header ---
       const config = { headers: { Authorization: `Bearer ${auth.token}` } };
       await axios.post(`${process.env.REACT_APP_API_URL}/bookings`, bookingData, config);
       
       setSuccess('Booking successful!');
-      // Reset form and re-fetch bookings
       setSelectedTrainerId('');
       setSessionDateTime('');
       setNotes('');
-      // Manually trigger a re-fetch of bookings
+      
       const bookingRes = await axios.get(`${process.env.REACT_APP_API_URL}/bookings/member`, config);
       setBookings(bookingRes.data);
 
@@ -94,10 +93,21 @@ const MemberBookingPage = () => {
     }
   };
 
+  // --- FIX 3: Add the missing helper function ---
+  const formatLocalDateTime = (isoString) => {
+    if (!isoString) return 'N/A';
+    const date = new Date(isoString);
+    return date.toLocaleString('en-GB', { // Using en-GB for dd/mm/yyyy format
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+    });
+  };
+
+
   return (
     <div>
       <Link to="/dashboard" style={{ display: 'inline-block', marginBottom: '20px', padding: '10px 15px', backgroundColor: '#6c757d', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
-        &larr; Back to Dashboard
+        ← Back to Dashboard
       </Link>
       <h2>Đặt lịch tập với Huấn luyện viên</h2>
 
