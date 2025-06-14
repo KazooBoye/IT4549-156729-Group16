@@ -1,3 +1,12 @@
+Bài tập lớn Kĩ thuật phần mềm Nhóm 18 Thành viên:
+
+    Nguyễn Mạnh Quân - 20225758 - Nhóm trưởng
+    Cao Đức Anh - 20225781
+    Đỗ Tuấn Minh - 20225741
+    Nguyễn Hải Anh - 20225597
+    Trần Cao Bảo Phúc - 20225756
+
+
 # Gym Management System
 
 This project is a full-stack application for managing a gym, built with React, NodeJS, Express, and PostgreSQL.
