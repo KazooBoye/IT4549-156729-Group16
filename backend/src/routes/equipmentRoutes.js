@@ -1,11 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const equipmentController = require('../controllers/equipmentController');
+const { protect, authorize } = require('../middlewares/authMiddleware');
 
-// Get all equipment
-router.get('/', equipmentController.getAllEquipment);
+// @route   GET /api/equipment
+// @desc    Get all equipment
+// @access  Private (Staff/Owner)
+router.get(
+    '/',
+    protect,
+    authorize('staff', 'owner'),
+    equipmentController.getAllEquipment
+);
 
-// Update equipment status and note
-router.put('/:id', equipmentController.updateEquipmentStatus);
+// @route   PUT /api/equipment/:id
+// @desc    Update a specific piece of equipment
+// @access  Private (Staff/Owner)
+router.put(
+    '/:id',
+    protect,
+    authorize('staff', 'owner'),
+    equipmentController.updateEquipment
+);
 
-module.exports = router; 
+module.exports = router;

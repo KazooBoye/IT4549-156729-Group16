@@ -3,6 +3,8 @@ const { Feedback, User, Profile } = require('../models');
 // @desc    Get all feedback for staff view
 // @route   GET /api/feedback
 // @access  Private (Staff/Owner)
+// In src/controllers/feedbackController.js
+
 exports.getAllFeedback = async (req, res) => {
   try {
     const feedbackList = await Feedback.findAll({
@@ -11,18 +13,26 @@ exports.getAllFeedback = async (req, res) => {
           model: User,
           as: 'SubmittingMember',
           attributes: ['email'],
-          include: [{ model: Profile, as: 'Profile', attributes: ['full_name'] }]
+          required: false, // Use LEFT JOIN: Get feedback even if the submitting user was deleted.
+          include: [{
+              model: Profile,
+              as: 'Profile',
+              attributes: ['full_name'],
+              required: false, // Use LEFT JOIN: Get the user even if their profile is incomplete.
+          }]
         }
       ],
       order: [['status', 'ASC'], ['created_at', 'DESC']],
     });
+
     res.json(feedbackList);
+
+
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching feedback:", err);
     res.status(500).send('Server Error');
   }
 };
-
 // @desc    Update/Respond to a feedback item
 // @route   PUT /api/feedback/:id
 // @access  Private (Staff/Owner)

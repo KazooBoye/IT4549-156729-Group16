@@ -53,8 +53,8 @@ MembershipPackage.hasMany(MemberSubscription, { foreignKey: 'package_id' });
 MemberSubscription.belongsTo(MembershipPackage, { foreignKey: 'package_id' });
 
 // A User (member) can submit many feedback items.
-db.User.hasMany(db.Feedback, { foreignKey: 'member_user_id', as: 'SubmittedFeedback' });
-db.Feedback.belongsTo(db.User, { foreignKey: 'member_user_id', as: 'SubmittingMember' });
+User.hasMany(Feedback, { foreignKey: 'memberUserId', as: 'SubmittedFeedback' });
+Feedback.belongsTo(User, { foreignKey: 'memberUserId', as: 'SubmittingMember' });
 
 // 2. Add the crucial new associations for bookings
 // A booking belongs to a member (a User)

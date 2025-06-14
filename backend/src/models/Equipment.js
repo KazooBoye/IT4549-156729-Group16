@@ -1,3 +1,4 @@
+// src/models/Equipment.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 
@@ -36,17 +37,11 @@ const Equipment = sequelize.define('Equipment', {
     allowNull: false,
     defaultValue: 'operational',
   },
-  created_at: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-  },
-  updated_at: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-  },
 }, {
   tableName: 'equipment',
-  timestamps: false,
+  timestamps: true, // Sequelize sẽ tự quản lý created_at và updated_at
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 });
 
-module.exports = Equipment; 
+module.exports = Equipment;

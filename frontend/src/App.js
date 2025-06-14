@@ -29,6 +29,7 @@ import StaffFeedbackManagementPage from './pages/Staff/StaffFeedbackManagementPa
 import StaffMemberServiceHistoryPage from './pages/Staff/StaffMemberServiceHistoryPage';
 import TrainerMemberListPage from './pages/Trainer/TrainerMemberListPage';
 import TrainerMemberProgressPage from './pages/Trainer/TrainerMemberProgressPage'; // Import the new page
+import EquipmentStatusPage from './pages/Staff/EquipmentStatusPage';
 
 import './App.css';
 
@@ -78,7 +79,6 @@ function App() {
                   <MemberBookingPage />
                 </PrivateRoute>
               } />
-              {/* Add other member routes here: /member/booking */}
 
 
               {/* Staff Specific Routes - Example placeholder */}
@@ -130,6 +130,13 @@ function App() {
                   <StaffMemberServiceHistoryPage />
                 </PrivateRoute>
               } />
+              
+              <Route path="/staff/equipment" element={
+                <PrivateRoute allowedRoles={['staff', 'owner']}>
+                  <EquipmentStatusPage />
+                </PrivateRoute>
+              } />
+
 
               <Route path="*" element={<NotFoundPage />} />
             </Routes>

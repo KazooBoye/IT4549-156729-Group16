@@ -22,3 +22,87 @@ a {
 a:hover {
   text-decoration: underline;
 }
+
+/* Feedback Management Page Styles */
+.feedback-management-container {
+  padding: 20px;
+}
+
+.feedback-table-wrapper {
+  overflow-x: auto; /* Allows table to scroll on small screens */
+}
+
+.feedback-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 0.9rem;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.10);
+}
+
+.feedback-table thead tr {
+  background-color: #007bff;
+  color: #ffffff;
+  text-align: left;
+}
+
+.feedback-table th,
+.feedback-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #dddddd;
+}
+
+.feedback-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.feedback-table tbody tr:nth-of-type(even) {
+  background-color: #f3f3f3;
+}
+
+.feedback-table tbody tr:last-of-type {
+  border-bottom: 2px solid #007bff;
+}
+
+.feedback-table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+.btn-view {
+  padding: 6px 12px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-view:hover {
+  background-color: #218838;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.status-submitted {
+  background-color: #17a2b8; /* Info Blue */
+}
+
+.status-in.progress {
+    background-color: #ffc107; /* Warning Yellow */
+    color: #212529;
+}
+
+.status-resolved, .status-replied {
+  background-color: #28a745; /* Success Green */
+}
+
+.status-closed {
+    background-color: #6c757d; /* Secondary Grey */
+}
