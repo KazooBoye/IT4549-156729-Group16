@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 // import axios from 'axios'; // For API calls
 
 const ViewPackagesPage = () => {
@@ -47,6 +48,9 @@ const ViewPackagesPage = () => {
 
   return (
     <div>
+      <Link to="/dashboard" style={{ display: 'inline-block', marginBottom: '20px', padding: '10px 15px', backgroundColor: '#6c757d', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
+        &larr; Back to Dashboard
+      </Link>
       <h2>Các Gói tập Hiện có</h2>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
         {packages.map((pkg) => (

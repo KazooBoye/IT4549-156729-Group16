@@ -3,6 +3,10 @@ const express = require('express');
 const cors = require('cors');
 const pool = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const equipmentRoutes = require('./routes/equipmentRoutes');
+const memberRoutes = require('./routes/memberRoutes');
+const feedbackRoutes = require('./routes/feedbackRoutes');
+const serviceHistoryRoutes = require('./routes/serviceHistoryRoutes');
 // Import other routes here as they are created
 // const userRoutes = require('./routes/userRoutes');
 // const memberRoutes = require('./routes/memberRoutes');
@@ -29,6 +33,10 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/equipment', equipmentRoutes);
+app.use('/api/members', memberRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/service-history', serviceHistoryRoutes);
 // app.use('/api/users', userRoutes);
 // app.use('/api/members', memberRoutes);
 // ... other routes

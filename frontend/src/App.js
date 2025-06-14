@@ -17,9 +17,17 @@ import MemberProfilePage from './pages/Member/MemberProfilePage';
 import MemberPaymentPage from './pages/Member/MemberPaymentPage';
 import MemberTrainingHistoryPage from './pages/Member/MemberTrainingHistoryPage';
 import ServiceUserRatingPage from './pages/Member/ServiceUserRatingPage';
+import MemberBookingPage from './pages/Member/MemberBookingPage';
 // Package Page (can be public or private depending on requirements)
 import ViewPackagesPage from './pages/Packages/ViewPackagesPage';
 
+// New pages
+import OwnerEquipmentStatusPage from './pages/Owner/OwnerEquipmentStatusPage';
+import StaffRegisterMemberPage from './pages/Staff/StaffRegisterMemberPage';
+import StaffRenewPackagePage from './pages/Staff/StaffRenewPackagePage';
+import StaffFeedbackManagementPage from './pages/Staff/StaffFeedbackManagementPage';
+import StaffMemberServiceHistoryPage from './pages/Staff/StaffMemberServiceHistoryPage';
+import TrainerMemberListPage from './pages/Trainer/TrainerMemberListPage';
 
 import './App.css';
 
@@ -64,6 +72,11 @@ function App() {
                   <ServiceUserRatingPage />
                 </PrivateRoute>
               } />
+              <Route path="/member/booking" element={
+                <PrivateRoute allowedRoles={['member']}>
+                  <MemberBookingPage />
+                </PrivateRoute>
+              } />
               {/* Add other member routes here: /member/booking */}
 
 
@@ -74,19 +87,43 @@ function App() {
                 </PrivateRoute>
               } /> */}
 
-              {/* Trainer Specific Routes - Example placeholder */}
-              {/* <Route path="/trainer/my-members" element={
+              {/* Trainer Specific Routes */}
+              <Route path="/trainer/my-members" element={
                 <PrivateRoute allowedRoles={['trainer', 'owner']}>
-                  <TrainerMembersPage />
+                  <TrainerMemberListPage />
                 </PrivateRoute>
-              } /> */}
+              } />
 
               {/* Admin/Owner Specific Routes - Example placeholder */}
-              {/* <Route path="/admin/manage-users" element={
+              <Route path="/admin/manage-equipment" element={
                 <PrivateRoute allowedRoles={['owner']}>
-                  <AdminManageUsersPage />
+                  <OwnerEquipmentStatusPage />
                 </PrivateRoute>
-              } /> */}
+              } />
+
+              <Route path="/staff/register-member" element={
+                <PrivateRoute allowedRoles={['staff']}>
+                  <StaffRegisterMemberPage />
+                </PrivateRoute>
+              } />
+
+              <Route path="/staff/renew-package" element={
+                <PrivateRoute allowedRoles={['staff']}>
+                  <StaffRenewPackagePage />
+                </PrivateRoute>
+              } />
+
+              <Route path="/staff/feedback-management" element={
+                <PrivateRoute allowedRoles={['staff']}>
+                  <StaffFeedbackManagementPage />
+                </PrivateRoute>
+              } />
+
+              <Route path="/staff/member-service-history" element={
+                <PrivateRoute allowedRoles={['staff']}>
+                  <StaffMemberServiceHistoryPage />
+                </PrivateRoute>
+              } />
 
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
