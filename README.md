@@ -50,36 +50,8 @@ This project is a full-stack application for managing a gym, built with React, N
     EMAIL_USER=your_email@example.com
     EMAIL_PASS=your_email_password
     ```
-4.  Set up your PostgreSQL database:
-    -   Create a database named `gym_management` (or as specified in your `.env`).
-    -   Run the SQL scripts to create tables (these will need to be created based on the models, e.g., in `backend/src/models/User.js` comments).
-    Example table creation (execute in psql or a DB tool):
-    ```sql
-    CREATE TABLE users (
-        user_id SERIAL PRIMARY KEY,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
-        role VARCHAR(50) NOT NULL CHECK (role IN ('guest', 'member', 'staff', 'trainer', 'owner')),
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    );
 
-    CREATE TABLE profiles (
-        profile_id SERIAL PRIMARY KEY,
-        user_id INTEGER UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
-        full_name VARCHAR(255),
-        date_of_birth DATE,
-        phone_number VARCHAR(20),
-        address TEXT,
-        occupation VARCHAR(100),
-        profile_picture_url VARCHAR(255),
-        fingerprint_data TEXT,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    );
-    -- Add other tables like membership_packages, equipment, etc.
-    ```
-
-5.  Start the backend server:
+4.  Start the backend server:
     ```bash
     npm start
     # or for development with nodemon
