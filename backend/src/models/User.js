@@ -25,20 +25,35 @@ CREATE TABLE profiles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 */
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
 
-// Placeholder for user related database functions
-const User = {
-  // Example function (to be implemented in a service or controller)
-  findByEmail: async (email) => {
-    // const res = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    // return res.rows[0];
-    console.log(`Placeholder for finding user by email: ${email}`);
-    return null;
+const User = sequelize.define('User', {
+  user_id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
   },
-  create: async (userData) => {
-    console.log('Placeholder for creating user:', userData);
-    return { id: 1, ...userData }; // Mock response
-  }
-};
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+    validate: {
+      isEmail: true,
+    },
+  },
+  password_hash: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  role: {
+    type: DataTypes.ENUM('member', 'staff', 'trainer', 'owner'),
+    allowNull: false,
+  },
+}, {
+  tableName: 'users',
+  createdAt: 'created_at',
+  updatedAt: 'updated_at', // Assuming you don't have created_at/updated_at in the DB
+});
 
 module.exports = User;

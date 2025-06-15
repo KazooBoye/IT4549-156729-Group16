@@ -15,11 +15,27 @@ import { AuthProvider } from './contexts/AuthContext';
 // Member Pages
 import MemberProfilePage from './pages/Member/MemberProfilePage';
 import MemberPaymentPage from './pages/Member/MemberPaymentPage';
+import MemberWorkoutHistoryPage from './pages/Member/MemberWorkoutHistoryPage';
+import ServiceUserRatingPage from './pages/Member/ServiceUserRatingPage';
+import MemberBookingPage from './pages/Member/MemberBookingPage';
 // Package Page (can be public or private depending on requirements)
-import ViewPackagesPage from './pages/Packages/ViewPackagesPage';
+import ViewPackagesPage from './pages/Member/ViewPackagesPage';
 
+// New pages
+import OwnerEquipmentStatusPage from './pages/Owner/OwnerEquipmentStatusPage';
+import StaffRegisterMemberPage from './pages/Staff/StaffRegisterMemberPage';
+import StaffRenewPackagePage from './pages/Staff/StaffRenewPackagePage';
+import StaffFeedbackManagementPage from './pages/Staff/StaffFeedbackManagementPage';
+import StaffMemberServiceHistoryPage from './pages/Staff/RecordServiceUsagePage';
+import TrainerMemberListPage from './pages/Trainer/TrainerMemberListPage';
+import TrainerMemberProgressPage from './pages/Trainer/TrainerMemberProgressPage'; // Import the new page
+import EquipmentStatusPage from './pages/Staff/EquipmentStatusPage';
+import EvaluateWorkoutPage from './pages/Trainer/EvaluateWorkoutPage'; // Import the new page for evaluating workouts
+import UserManagementPage from './pages/Owner/UserManagementPage';
 
 import './App.css';
+import TrackWorkoutPage from './pages/Trainer/TrackWorkoutPage';
+import SystemSettingsPage from './pages/Owner/SystemSettingsPage';  
 
 function App() {
   return (
@@ -52,7 +68,21 @@ function App() {
                   <MemberPaymentPage />
                 </PrivateRoute>
               } />
-              {/* Add other member routes here: /member/history, /member/feedback, /member/booking */}
+              <Route path="/member/history" element={
+                <PrivateRoute allowedRoles={['member']}>
+                  <MemberWorkoutHistoryPage />
+                </PrivateRoute>
+              } />
+              <Route path="/member/feedback" element={
+                <PrivateRoute allowedRoles={['member']}>
+                  <ServiceUserRatingPage />
+                </PrivateRoute>
+              } />
+              <Route path="/member/booking" element={
+                <PrivateRoute allowedRoles={['member']}>
+                  <MemberBookingPage />
+                </PrivateRoute>
+              } />
 
 
               {/* Staff Specific Routes - Example placeholder */}
@@ -62,19 +92,75 @@ function App() {
                 </PrivateRoute>
               } /> */}
 
-              {/* Trainer Specific Routes - Example placeholder */}
-              {/* <Route path="/trainer/my-members" element={
+              {/* Trainer Specific Routes */}
+              <Route path="/trainer/my-members" element={
                 <PrivateRoute allowedRoles={['trainer', 'owner']}>
-                  <TrainerMembersPage />
+                  <TrainerMemberListPage />
                 </PrivateRoute>
-              } /> */}
+              } />
+              <Route path="/trainer/member-progress" element={
+                <PrivateRoute allowedRoles={['trainer', 'owner']}>
+                  <TrackWorkoutPage/>
+                </PrivateRoute>
+              } />
+
+              <Route 
+                path="/trainer/evaluate-member" 
+                element={
+                <PrivateRoute roles={['trainer', 'owner']}>
+                  <EvaluateWorkoutPage />
+                  </PrivateRoute>
+              } 
+        />
 
               {/* Admin/Owner Specific Routes - Example placeholder */}
-              {/* <Route path="/admin/manage-users" element={
+              <Route path="/admin/manage-equipment" element={
                 <PrivateRoute allowedRoles={['owner']}>
-                  <AdminManageUsersPage />
+                  <OwnerEquipmentStatusPage />
                 </PrivateRoute>
-              } /> */}
+              } />
+              <Route path="/admin/manage-system" element={
+                <PrivateRoute allowedRoles={['owner']}>
+                  <SystemSettingsPage />
+                </PrivateRoute>
+              } />
+
+              <Route path="/admin/manage-users" element={
+                <PrivateRoute allowedRoles={['owner']}>
+                  <UserManagementPage />
+                </PrivateRoute>
+              } />
+
+              <Route path="/staff/register-member" element={
+                <PrivateRoute allowedRoles={['staff', 'trainer']}>
+                  <StaffRegisterMemberPage />
+                </PrivateRoute>
+              } />
+
+              <Route path="/staff/renew-package" element={
+                <PrivateRoute allowedRoles={['staff']}>
+                  <StaffRenewPackagePage />
+                </PrivateRoute>
+              } />
+
+              <Route path="/staff/feedback-management" element={
+                <PrivateRoute allowedRoles={['staff']}>
+                  <StaffFeedbackManagementPage />
+                </PrivateRoute>
+              } />
+
+              <Route path="/staff/member-service-history" element={
+                <PrivateRoute allowedRoles={['staff']}>
+                  <StaffMemberServiceHistoryPage />
+                </PrivateRoute>
+              } />
+              
+              <Route path="/staff/equipment" element={
+                <PrivateRoute allowedRoles={['staff', 'owner']}>
+                  <EquipmentStatusPage />
+                </PrivateRoute>
+              } />
+
 
               <Route path="*" element={<NotFoundPage />} />
             </Routes>

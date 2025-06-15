@@ -1,22 +1,21 @@
-import React from 'react'; // Removed useContext
+import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// import { AuthContext } from '../../contexts/AuthContext'; // To be created
+import AuthContext from '../../contexts/AuthContext';
 
 const Navbar = () => {
-  // const { user, logout } = useContext(AuthContext); // Placeholder
-  const user = null; // Placeholder
+  const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // logout();
+    logout();
     navigate('/login');
   };
 
   return (
     <nav style={{ background: '#333', color: '#fff', padding: '1rem', display: 'flex', justifyContent: 'space-between' }}>
-      <Link to="/" style={{ color: '#fff', textDecoration: 'none', fontSize: '1.5rem' }}>GymPro</Link>
+      <Link to={user ? "/dashboard" : "/"} style={{ color: '#fff', textDecoration: 'none', fontSize: '1.5rem' }}>GymPro</Link>
       <div>
-        <Link to="/" style={{ color: '#fff', marginRight: '1rem' }}>Home</Link>
+        {!user && <Link to="/" style={{ color: '#fff', marginRight: '1rem' }}>Home</Link>}
         {user ? (
           <>
             <Link to="/dashboard" style={{ color: '#fff', marginRight: '1rem' }}>Dashboard</Link>

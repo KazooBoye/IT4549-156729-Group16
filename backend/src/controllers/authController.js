@@ -1,79 +1,72 @@
-const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-// const emailService = require('../services/emailService'); // To be created
+const { User, Profile, sequelize } = require('../models');
 
-// Placeholder for password reset tokens storage (in a real app, use a DB table)
+// In a production app, this should be a database table (e.g., PasswordResetTokens)
 const passwordResetTokens = {};
 
 // @desc    Register a new user
 exports.registerUser = async (req, res) => {
-  const { email, password, fullName, role } = req.body; // Get role from request body
+  const { email, password, fullName, role } = req.body;
 
   if (!email || !password || !fullName || !role) {
-    return res.status(400).json({ msg: 'Please enter all required fields (email, password, fullName, role)' });
+    return res.status(400).json({ msg: 'Please enter all required fields' });
   }
 
-  // Validate role
   const allowedRoles = ['member', 'staff', 'trainer', 'owner'];
   if (!allowedRoles.includes(role)) {
     return res.status(400).json({ msg: 'Invalid role specified.' });
   }
 
+  const t = await sequelize.transaction();
+
   try {
-    // Check if user already exists
-    let user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (user.rows.length > 0) {
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
       return res.status(400).json({ msg: 'User already exists' });
     }
 
-    // Hash password
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // Insert user into database
-    const newUser = await pool.query(
-      'INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING user_id, email, role',
-      [email, passwordHash, role] // Use the provided role
-    );
-    
-    // Insert profile (simplified)
-    if (newUser.rows[0]) {
-        await pool.query(
-            'INSERT INTO profiles (user_id, full_name) VALUES ($1, $2)',
-            [newUser.rows[0].user_id, fullName]
-        );
-    }
+    const newUser = await User.create({
+      email,
+      password_hash: passwordHash,
+      role,
+    }, { transaction: t });
 
+    await Profile.create({
+      user_id: newUser.user_id,
+      full_name: fullName,
+    }, { transaction: t });
 
-    // Create JWT token
+    await t.commit();
+
     const payload = {
-      user: {
-        id: newUser.rows[0].user_id,
-        role: newUser.rows[0].role,
-      },
+      user: { id: newUser.user_id, role: newUser.role },
     };
 
     jwt.sign(
       payload,
       process.env.JWT_SECRET,
-      { expiresIn: '5h' }, // Token expires in 5 hours
+      { expiresIn: '5h' },
       (err, token) => {
         if (err) throw err;
         res.status(201).json({
           token,
           user: {
-            id: newUser.rows[0].user_id,
-            email: newUser.rows[0].email,
-            role: newUser.rows[0].role,
-            fullName: fullName
+            id: newUser.user_id,
+            email: newUser.email,
+            role: newUser.role,
+            fullName: fullName,
           },
-          msg: 'User registered successfully'
+          msg: 'User registered successfully',
         });
       }
     );
   } catch (err) {
+    await t.rollback();
     console.error(err.message);
     res.status(500).send('Server error during registration');
   }
@@ -88,26 +81,26 @@ exports.loginUser = async (req, res) => {
   }
 
   try {
-    // Check for user
-    const result = await pool.query('SELECT u.user_id, u.email, u.password_hash, u.role, p.full_name FROM users u LEFT JOIN profiles p ON u.user_id = p.user_id WHERE u.email = $1', [email]);
-    const user = result.rows[0];
+    const user = await User.findOne({
+      where: { email },
+      include: [{
+        model: Profile,
+        as: 'Profile', // <-- ADD THIS LINE
+        attributes: ['full_name']
+      }]
+    });
 
     if (!user) {
       return res.status(400).json({ msg: 'Invalid credentials' });
     }
 
-    // Check password
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
       return res.status(400).json({ msg: 'Invalid credentials' });
     }
 
-    // Create JWT token
     const payload = {
-      user: {
-        id: user.user_id,
-        role: user.role,
-      },
+      user: { id: user.user_id, role: user.role },
     };
 
     jwt.sign(
@@ -122,9 +115,9 @@ exports.loginUser = async (req, res) => {
             id: user.user_id,
             email: user.email,
             role: user.role,
-            fullName: user.full_name
+            fullName: user.Profile ? user.Profile.full_name : null,
           },
-          msg: 'Login successful'
+          msg: 'Login successful',
         });
       }
     );
@@ -134,40 +127,38 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// @desc    Request password reset
+// @desc    Request password reset [FIXED]
 exports.forgotPassword = async (req, res) => {
     const { email } = req.body;
     try {
-        const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (userResult.rows.length === 0) {
-            return res.status(404).json({ msg: 'User with that email does not exist.' });
+        // Use Sequelize to find the user
+        const user = await User.findOne({ where: { email } });
+        if (!user) {
+            // Note: Don't reveal if a user exists for security reasons.
+            // Send a generic success message regardless.
+            return res.json({ msg: 'If a user with that email exists, password reset instructions have been sent.' });
         }
-        const user = userResult.rows[0];
 
-        // Generate a reset token
         const resetToken = crypto.randomBytes(32).toString('hex');
         const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-        const tokenExpiry = Date.now() + 10 * 60 * 1000; // Token valid for 10 minutes
+        const tokenExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-        // Store token (in a real app, use a DB table `password_reset_tokens`)
-        // For now, using an in-memory object (not suitable for production)
         passwordResetTokens[hashedToken] = { userId: user.user_id, expires: tokenExpiry };
         
-        const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${resetToken}`; // This URL would be for frontend
+        const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${resetToken}`;
 
-        // Send email (to be implemented with emailService)
         console.log(`Password reset token for ${email}: ${resetToken}`);
         console.log(`Reset URL: ${resetUrl}`);
         // await emailService.sendPasswordResetEmail(email, resetUrl);
 
-        res.json({ msg: 'Password reset instructions sent to your email.' });
+        res.json({ msg: 'If a user with that email exists, password reset instructions have been sent.' });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
     }
 };
 
-// @desc    Reset password
+// @desc    Reset password [FIXED]
 exports.resetPassword = async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
@@ -183,9 +174,13 @@ exports.resetPassword = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
-        await pool.query('UPDATE users SET password_hash = $1 WHERE user_id = $2', [passwordHash, tokenData.userId]);
+        // Use Sequelize to update the user's password
+        await User.update(
+            { password_hash: passwordHash },
+            { where: { user_id: tokenData.userId } }
+        );
 
-        delete passwordResetTokens[hashedToken]; // Invalidate the token
+        delete passwordResetTokens[hashedToken];
 
         res.json({ msg: 'Password has been reset successfully.' });
     } catch (err) {

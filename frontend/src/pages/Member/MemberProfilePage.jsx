@@ -91,7 +91,7 @@ const MemberProfilePage = () => {
 
   return (
     <div>
-      <Link to="/member/dashboard" style={{ display: 'inline-block', marginBottom: '20px', padding: '10px 15px', backgroundColor: '#6c757d', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
+      <Link to="/dashboard" style={{ display: 'inline-block', marginBottom: '20px', padding: '10px 15px', backgroundColor: '#6c757d', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
         &larr; Back to Dashboard
       </Link>
       <h2>My Profile</h2>

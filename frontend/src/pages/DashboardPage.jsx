@@ -71,7 +71,7 @@ const DashboardPage = () => {
                         <ul>
                             <li><Link to="/trainer/my-members">Danh sách học viên</Link></li>
                             <li><Link to="/trainer/member-progress">Theo dõi và cập nhật tiến độ học viên</Link></li>
-                            <li><Link to="/trainer/evaluate-results">Đánh giá kết quả luyện tập</Link></li>
+                            <li><Link to="/trainer/evaluate-member">Đánh giá kết quả luyện tập</Link></li>
                         </ul>
                     </>
                 );
@@ -82,6 +82,7 @@ const DashboardPage = () => {
                         <h4>Management Functions:</h4>
                         <h5>User Management</h5>
                         <ul>
+                            <li><Link to="/admin/manage-system">Quản lý tổng thể hệ thống</Link></li>
                             <li><Link to="/admin/manage-users">Quản trị người dùng</Link></li>
                             {/* Assign roles and permissions might be part of manage-users or separate */}
                         </ul>

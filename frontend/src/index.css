@@ -22,3 +22,480 @@ a {
 a:hover {
   text-decoration: underline;
 }
+
+/* Feedback Management Page Styles */
+.feedback-management-container {
+  padding: 20px;
+}
+
+.feedback-table-wrapper {
+  overflow-x: auto; /* Allows table to scroll on small screens */
+}
+
+.feedback-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 0.9rem;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.10);
+}
+
+.feedback-table thead tr {
+  background-color: #007bff;
+  color: #ffffff;
+  text-align: left;
+}
+
+.feedback-table th,
+.feedback-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #dddddd;
+}
+
+.feedback-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.feedback-table tbody tr:nth-of-type(even) {
+  background-color: #f3f3f3;
+}
+
+.feedback-table tbody tr:last-of-type {
+  border-bottom: 2px solid #007bff;
+}
+
+.feedback-table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+.btn-view {
+  padding: 6px 12px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-view:hover {
+  background-color: #218838;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.status-submitted {
+  background-color: #17a2b8; /* Info Blue */
+}
+
+.status-in.progress {
+    background-color: #ffc107; /* Warning Yellow */
+    color: #212529;
+}
+
+.status-resolved, .status-replied {
+  background-color: #28a745; /* Success Green */
+}
+
+.status-closed {
+    background-color: #6c757d; /* Secondary Grey */
+}
+/* General Management Page Styles */
+.management-page-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.btn-back-dashboard {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: #007bff;
+  text-decoration: none;
+}
+.btn-back-dashboard:hover {
+  text-decoration: underline;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.page-header h2 {
+  margin: 0;
+}
+
+.btn-add-new {
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.btn-add-new:hover {
+  background-color: #0056b3;
+}
+
+/* Table Styles */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+  background-color: white;
+}
+
+.data-table thead tr {
+  background-color: #343a40;
+  color: #ffffff;
+  text-align: left;
+}
+
+.data-table th, .data-table td {
+  padding: 15px;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.no-data-cell {
+  text-align: center;
+  padding: 30px;
+  font-style: italic;
+  color: #6c757d;
+}
+
+/* Action Buttons */
+.action-buttons button {
+  margin-right: 5px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+}
+
+.btn-view { background-color: #17a2b8; } /* Info */
+.btn-view:hover { background-color: #117a8b; }
+.btn-edit { background-color: #ffc107; color: #212529; } /* Warning */
+.btn-edit:hover { background-color: #e0a800; }
+.btn-delete { background-color: #dc3545; } /* Danger */
+.btn-delete:hover { background-color: #c82333; }
+
+
+/* Status Badge from previous use case */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+.status-active, .status-completed { background-color: #28a745; color: white; }
+.status-pending { background-color: #ffc107; color: #212529; }
+.status-inactive, .status-expired { background-color: #6c757d; color: white; }
+
+/* Add these new status badge styles */
+
+.status-badge.status-active, .status-badge.status-đang-tập {
+    background-color: #28a745; /* Green */
+    color: white;
+}
+
+.status-badge.status-suspended, .status-badge.status-tạm-ngưng {
+    background-color: #ffc107; /* Yellow */
+    color: #212529;
+}
+
+.status-badge.status-finished, .status-badge.status-kết-thúc {
+    background-color: #6c757d; /* Grey */
+    color: white;
+}
+
+/* General Management Page Styles (you may already have some of these) */
+.management-page-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+.page-header h4 {
+  margin: 0;
+  color: #495057;
+}
+
+/* Member Selection Styles */
+.member-selection-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.member-select-button {
+  padding: 10px 20px;
+  border: 1px solid #007bff;
+  background-color: white;
+  color: #007bff;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+.member-select-button:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Form Styles */
+.form-card {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  margin-bottom: 2rem;
+}
+.form-card h4 {
+  margin-top: 0;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.form-group {
+  margin-bottom: 1rem;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #495057;
+}
+.form-group input, .form-group textarea, .form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* Session List Styles */
+.session-item {
+  background-color: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid #f1f1f1;
+}
+.session-body p {
+  margin: 0.5rem 0;
+}
+.session-actions {
+  margin-top: 1rem;
+  border-top: 1px solid #f1f1f1;
+  padding-top: 1rem;
+}
+.btn-action {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+    margin-right: 10px;
+}
+.btn-complete { background-color: #28a745; }
+.btn-missed { background-color: #ffc107; color: #212529; }
+
+/* Status Badge Styles (reusable) */
+.status-badge { padding: 4px 10px; border-radius: 12px; color: white; font-size: 0.8rem; font-weight: bold; }
+.status-planned { background-color: #17a2b8; }
+.status-completed { background-color: #28a745; }
+.status-missed { background-color: #dc3545; }
+
+/* General Management Page Styles (you may already have these) */
+.management-page-container {
+  padding: 20px;
+  max-width: 900px; /* A good width for forms */
+  margin: 0 auto;
+}
+.btn-back-dashboard {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: #007bff;
+  text-decoration: none;
+}
+.btn-back-dashboard:hover {
+  text-decoration: underline;
+}
+
+/* Form Card Styles */
+.form-card {
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin-top: 1.5rem;
+}
+
+.settings-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.settings-form .form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #343a40;
+}
+
+.settings-form .form-group input[type="text"],
+.settings-form .form-group input[type="tel"],
+.settings-form .form-group input[type="email"] {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.settings-form .form-group input:focus {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.settings-form .btn-primary {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.settings-form .btn-primary:hover {
+  background-color: #0056b3;
+}
+
+/* Alert/Success Message Styles */
+.form-error {
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 1rem;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+}
+.form-success {
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  padding: 1rem;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+}
+/* --- Add these styles to your existing CSS file --- */
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h2 {
+  margin-top: 0;
+}
+
+.modal-content .form-group {
+  margin-bottom: 1rem;
+}
+
+.modal-content .form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.modal-content .form-group input,
+.modal-content .form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 1.5rem;
+}
+
+.modal-actions .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* Role Badge Styles */
+.status-badge.status-owner { background-color: #6f42c1; } /* Purple */
+.status-badge.status-staff { background-color: #007bff; } /* Blue */
+.status-badge.status-trainer { background-color: #fd7e14; } /* Orange */
+.status-badge.status-member { background-color: #20c997; } /* Teal */
