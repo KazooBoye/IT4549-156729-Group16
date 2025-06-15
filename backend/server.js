@@ -9,6 +9,8 @@ const memberRoutes = require('./routes/memberRoutes'); // New member routes
 const trainerRoutes = require('./routes/trainerRoutes'); // Import trainer routes
 const userRoutes = require('./routes/userRoutes'); // Add this
 const bookingRoutes = require('./routes/bookingRoutes'); // Add this
+const serviceRoutes = require('./routes/serviceRoutes'); // Import service routes
+const equipmentRoutes = require('./routes/equipmentRoutes'); // Import equipment routes
 // ... other route imports ...
 
 const app = express();
@@ -24,6 +26,7 @@ app.use('/api/members', memberRoutes); // Use member routes
 app.use('/api/trainer', trainerRoutes); // Use trainer routes
 app.use('/api/users', userRoutes); // Add this
 app.use('/api/bookings', bookingRoutes); // Add this
+app.use('/api/services', serviceRoutes); // Use service routes
 // ... other app.use('/api/...') ...
 
 // ... existing server setup (PORT, app.listen) ...

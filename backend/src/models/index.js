@@ -38,7 +38,7 @@ db.Sequelize = Sequelize;
 // --- NOW, MANUALLY DEFINE THE ASSOCIATIONS ---
 // This provides a clear, single place to see all relationships.
 
-const { User, Profile, MemberSubscription, MembershipPackage, Equipment, Feedback, PersonalTrainingBooking} = db;
+const { User, Profile, SystemSetting, MemberSubscription, MembershipPackage, Equipment, Feedback, PersonalTrainingBooking, ServiceHistory, Service, WorkoutSession} = db;
 
 // User <-> Profile
 User.hasOne(Profile, { foreignKey: 'user_id', as: 'Profile' });
@@ -55,6 +55,18 @@ MemberSubscription.belongsTo(MembershipPackage, { foreignKey: 'package_id' });
 // A User (member) can submit many feedback items.
 User.hasMany(Feedback, { foreignKey: 'memberUserId', as: 'SubmittedFeedback' });
 Feedback.belongsTo(User, { foreignKey: 'memberUserId', as: 'SubmittingMember' });
+
+ServiceHistory.belongsTo(User, { foreignKey: 'member_user_id', as: 'Member' });
+ServiceHistory.belongsTo(User, { foreignKey: 'recorded_by_staff_id', as: 'StaffRecorder' });
+
+ServiceHistory.belongsTo(Service, { foreignKey: 'service_id' });
+Service.hasMany(ServiceHistory, { foreignKey: 'service_id' });
+
+WorkoutSession.belongsTo(User, { foreignKey: 'memberUserId', as: 'Member' });
+User.hasMany(WorkoutSession, { foreignKey: 'memberUserId', as: 'MemberSessions' });
+
+WorkoutSession.belongsTo(User, { foreignKey: 'trainerUserId', as: 'Trainer' });
+User.hasMany(WorkoutSession, { foreignKey: 'trainerUserId', as: 'TrainerSessions' });
 
 // 2. Add the crucial new associations for bookings
 // A booking belongs to a member (a User)

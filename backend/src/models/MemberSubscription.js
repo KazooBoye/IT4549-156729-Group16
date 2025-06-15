@@ -35,6 +35,12 @@ const MemberSubscription = sequelize.define('MemberSubscription', {
     allowNull: false,
     defaultValue: 'pending',
   },
+  activityStatus: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    defaultValue: 'active',
+    field: 'activity_status'
+  },
   payment_method: {
     type: DataTypes.STRING(50),
   },

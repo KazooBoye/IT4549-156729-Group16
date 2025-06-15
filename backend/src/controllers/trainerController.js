@@ -1,204 +1,225 @@
-const pool = require('../config/db');
+const { User, Profile, MemberSubscription, MembershipPackage, PersonalTrainingBooking, sequelize, WorkoutSession } = require('../models');
+const { Op } = require('sequelize');
 
-// Helper function to format duration
-const formatDuration = (checkIn, checkOut) => {
-  if (!checkOut) return 'Ongoing';
-  const durationMs = new Date(checkOut) - new Date(checkIn);
-  const minutes = Math.floor(durationMs / 60000);
-  if (minutes < 60) {
-    return `${minutes} phút`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return `${hours} giờ ${remainingMinutes > 0 ? `${remainingMinutes} phút` : ''}`.trim();
-};
-
-// Helper function to format date
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-};
-
-
-// Get members associated with the logged-in trainer
-// This is a simplified version. A more robust solution might involve a dedicated trainer_member_assignments table.
-exports.getTrainerMembers = async (req, res) => {
-  const trainerId = req.user.id; // Assuming authMiddleware adds user to req
-  try {
-    // Fetches members for whom the trainer has recorded sessions or has PT bookings
-    // This query can be adjusted based on how trainers are "assigned" to members
-    const query = `
-      SELECT DISTINCT u.user_id, p.full_name, u.email
-      FROM users u
-      JOIN profiles p ON u.user_id = p.user_id
-      WHERE u.role = 'member' AND (
-        u.user_id IN (SELECT DISTINCT member_user_id FROM workout_sessions WHERE recorded_by_user_id = $1)
-        OR
-        u.user_id IN (SELECT DISTINCT member_user_id FROM personal_training_bookings WHERE trainer_user_id = $1)
-      )
-      ORDER BY p.full_name;
-    `;
-    const { rows } = await pool.query(query, [trainerId]);
-    res.json(rows);
-  } catch (error) {
-    console.error('Error fetching trainer members:', error);
-    res.status(500).json({ msg: 'Server error while fetching members' });
-  }
-};
-
-// Get training history for a specific member (for trainer's view)
-exports.getMemberTrainingHistoryForTrainer = async (req, res) => {
-  const memberUserId = req.params.memberId;
-  // const trainerId = req.user.id; // Can be used for authorization checks
+/**
+ * Chức năng: Lấy danh sách hội viên được phân công cho HLV đang đăng nhập
+ * Tương ứng: Bước 1 & 2 của Use Case
+ * Route: GET /api/trainer/my-members
+ */
+exports.getAssignedMembers = async (req, res) => {
+  const trainerId = req.user.user_id; // Lấy từ middleware xác thực
 
   try {
-    // Add authorization check here if needed: ensure trainer is allowed to see this member's history
-    const query = `
-      SELECT
-        ws.session_id,
-        ws.check_in_time,
-        ws.check_out_time,
-        ws.session_name,
-        ws.activity_type AS session_type,
-        mp.package_name,
-        tp.full_name AS trainer_name, -- This will be the current trainer or another if they co-train
-        ws.completion_percentage,
-        ws.trainer_notes_on_completion,
-        ws.recorded_by_user_id
-      FROM workout_sessions ws
-      LEFT JOIN member_subscriptions ms ON ws.subscription_id = ms.subscription_id
-      LEFT JOIN membership_packages mp ON ms.package_id = mp.package_id
-      LEFT JOIN users t_user ON ws.recorded_by_user_id = t_user.user_id
-      LEFT JOIN profiles tp ON t_user.user_id = tp.user_id
-      WHERE ws.member_user_id = $1
-      ORDER BY ws.check_in_time DESC;
-    `;
-    const { rows } = await pool.query(query, [memberUserId]);
+    // Tìm ID của tất cả các hội viên đã từng đặt lịch với HLV này
+    const memberIds = (await PersonalTrainingBooking.findAll({
+      where: { trainerUserId: trainerId },
+      attributes: ['memberUserId'],
+      group: ['memberUserId']
+    })).map(booking => booking.memberUserId);
 
-    const history = rows.map(row => ({
-      id: row.session_id,
-      session_date: formatDate(row.check_in_time),
-      session_name: row.session_name || 'N/A',
-      session_type: row.session_type || 'N/A',
-      duration: formatDuration(row.check_in_time, row.check_out_time),
-      package_name: row.package_name || 'N/A',
-      trainer_name: row.trainer_name || 'N/A',
-      completion_percentage: row.completion_percentage,
-      trainer_notes_on_completion: row.trainer_notes_on_completion,
-      recorded_by_user_id: row.recorded_by_user_id
-    }));
-    res.json({ history });
-  } catch (error) {
-    console.error('Error fetching member training history for trainer:', error);
-    res.status(500).json({ msg: 'Server error' });
+    if (memberIds.length === 0) {
+      return res.json([]); // Trả về mảng rỗng nếu không có hội viên nào
+    }
+    
+    // Lấy thông tin chi tiết của các hội viên đó
+    const members = await User.findAll({
+      where: { user_id: { [Op.in]: memberIds } },
+      attributes: ['user_id', 'email'],
+      include: [
+        { model: Profile, as: 'Profile', required: true },
+        { 
+          model: MemberSubscription,
+          include: [MembershipPackage]
+        }
+      ],
+      order: [[Profile, 'full_name', 'ASC']]
+    });
+
+    res.json(members);
+  } catch (err) {
+    console.error("Lỗi khi lấy danh sách hội viên của HLV:", err);
+    res.status(500).send('Lỗi Server');
   }
 };
 
-// Add a workout session for a member
+/**
+ * Chức năng: Lấy thông tin chi tiết của một hội viên
+ * Tương ứng: Bước 4.1 (Xem chi tiết)
+ * Route: GET /api/trainer/member/:id
+ */
+exports.getMemberDetails = async (req, res) => {
+    const memberId = req.params.id;
+    // Optional: Add a check to ensure the requesting trainer is allowed to see this member.
+
+    try {
+        const member = await User.findByPk(memberId, {
+            attributes: ['user_id', 'email', 'created_at'], // Select specific fields from User
+            include: [
+                {
+                    model: Profile,
+                    as: 'Profile', // Get all profile details
+                    required: true 
+                },
+                {
+                    model: MemberSubscription,
+                    separate: true, // Run this as a separate query for performance
+                    include: [MembershipPackage] // Include package names
+                },
+                // You can add more includes here later for training history, etc.
+            ]
+        });
+
+        if (!member) {
+            return res.status(404).json({ msg: 'Không tìm thấy hội viên.' });
+        }
+
+        res.json(member);
+    } catch (err) {
+        console.error("Lỗi khi lấy chi tiết hội viên:", err);
+        res.status(500).send('Lỗi Server');
+    }
+};
+
+/**
+ * Chức năng: HLV cập nhật thông tin hồ sơ của hội viên
+ * Tương ứng: Bước 4.3 & 5.3 (Chỉnh sửa)
+ * Route: PUT /api/trainer/member/:id
+ */
+exports.updateMemberProfileByTrainer = async (req, res) => {
+    const memberId = req.params.id;
+    const { fullName, dateOfBirth, phoneNumber } = req.body; // Các trường được phép sửa
+
+    try {
+        const profile = await Profile.findOne({ where: { user_id: memberId } });
+        if (!profile) {
+            return res.status(404).json({ msg: 'Không tìm thấy hồ sơ hội viên.' });
+        }
+        
+        profile.full_name = fullName || profile.full_name;
+        profile.date_of_birth = dateOfBirth || profile.date_of_birth;
+        profile.phone_number = phoneNumber || profile.phone_number;
+
+        await profile.save();
+        res.json({ msg: 'Cập nhật hồ sơ thành công.', profile });
+
+    } catch (err) {
+        console.error("Lỗi khi HLV cập nhật hồ sơ:", err);
+        res.status(500).send('Lỗi Server');
+    }
+};
+
+/**
+ * Chức năng: HLV xóa một hội viên
+ * Tương ứng: Bước 4.4 & 5.4 (Xóa)
+ * Route: DELETE /api/trainer/member/:id
+ */
+exports.deleteMemberByTrainer = async (req, res) => {
+    const memberId = req.params.id;
+    const t = await sequelize.transaction();
+    try {
+        const user = await User.findByPk(memberId);
+        if(!user) {
+            return res.status(404).json({ msg: 'Không tìm thấy hội viên.' });
+        }
+        
+        // Xóa tất cả các bản ghi liên quan trước (profile, subscriptions, etc.)
+        await Profile.destroy({ where: { user_id: memberId }, transaction: t });
+        await MemberSubscription.destroy({ where: { memberUserId: memberId }, transaction: t });
+        // ... xóa các bản ghi khác
+        
+        // Cuối cùng, xóa user
+        await user.destroy({ transaction: t });
+
+        await t.commit();
+        res.json({ msg: 'Xóa hội viên thành công.' });
+    } catch (err) {
+        await t.rollback();
+        console.error("Lỗi khi HLV xóa hội viên:", err);
+        res.status(500).send('Lỗi Server');
+    }
+};
+
+exports.getMemberSessions = async (req, res) => {
+    const { memberId } = req.params;
+    try {
+        const sessions = await WorkoutSession.findAll({
+            where: { memberUserId: memberId },
+            order: [['sessionDatetime', 'DESC']]
+        });
+        res.json(sessions);
+    } catch (err) {
+        res.status(500).send('Lỗi Server');
+    }
+};
+
+/**
+ * Chức năng: Thêm một buổi tập mới cho hội viên
+ * Tương ứng: Bước 6a
+ * Route: POST /api/trainer/sessions
+ */
 exports.addWorkoutSession = async (req, res) => {
-  const trainerId = req.user.id;
-  const {
-    member_user_id,
-    session_name,
-    activity_type,
-    check_in_time,
-    check_out_time, // Can be null if session is ongoing or not tracked
-    completion_percentage,
-    trainer_notes_on_completion,
-    subscription_id // Optional
-  } = req.body;
+    const trainerId = req.user.user_id;
+    const { memberId, sessionDatetime, exercisePlan, durationMinutes, notes } = req.body;
 
-  if (!member_user_id || !session_name || !activity_type || !check_in_time) {
-    return res.status(400).json({ msg: 'Please provide all required session details.' });
-  }
+    if (!memberId || !sessionDatetime || !exercisePlan || !durationMinutes) {
+        return res.status(400).json({ msg: 'Vui lòng nhập đầy đủ thông tin buổi tập.' });
+    }
 
-  try {
-    const query = `
-      INSERT INTO workout_sessions (
-        member_user_id, session_name, activity_type, check_in_time, check_out_time,
-        completion_percentage, trainer_notes_on_completion, recorded_by_user_id, subscription_id
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING *;
-    `;
-    const values = [
-      member_user_id, session_name, activity_type, check_in_time, check_out_time || null,
-      completion_percentage || null, trainer_notes_on_completion || null, trainerId, subscription_id || null
-    ];
-    const { rows } = await pool.query(query, values);
-    res.status(201).json({ msg: 'Workout session added successfully', session: rows[0] });
-  } catch (error) {
-    console.error('Error adding workout session:', error);
-    res.status(500).json({ msg: 'Server error while adding session' });
-  }
+    try {
+        const newSession = await WorkoutSession.create({
+            memberUserId: memberId,
+            trainerUserId: trainerId,
+            sessionDatetime,
+            exercisePlan,
+            durationMinutes,
+            trainerNotes: notes,
+            status: 'Planned'
+        });
+        res.status(201).json(newSession);
+    } catch (err) {
+        res.status(500).send('Lỗi Server');
+    }
 };
 
-// Update a workout session
+/**
+ * Chức năng: Cập nhật một buổi tập (nội dung hoặc trạng thái)
+ * Tương ứng: Bước 6b, 6c
+ * Route: PUT /api/trainer/sessions/:sessionId
+ */
 exports.updateWorkoutSession = async (req, res) => {
-  const trainerId = req.user.id;
-  const sessionId = req.params.sessionId;
-  const {
-    session_name,
-    activity_type,
-    check_in_time,
-    check_out_time,
-    completion_percentage,
-    trainer_notes_on_completion,
-    subscription_id
-  } = req.body;
+    const { sessionId } = req.params;
+    // Destructure all possible fields from the request body
+    const {
+        exercisePlan, durationMinutes, notes, status,
+        evaluationScore, evaluationComments, goalCompletionStatus, suggestionsForNextSession
+    } = req.body;
 
-  try {
-    // First, verify the session exists and was recorded by this trainer (or other auth logic)
-    const checkQuery = 'SELECT recorded_by_user_id FROM workout_sessions WHERE session_id = $1';
-    const checkResult = await pool.query(checkQuery, [sessionId]);
+    try {
+        const session = await WorkoutSession.findByPk(sessionId);
+        if (!session) {
+            return res.status(404).json({ msg: 'Không tìm thấy buổi tập.' });
+        }
+        
+        // --- Update General Info ---
+        if(exercisePlan) session.exercisePlan = exercisePlan;
+        if(durationMinutes) session.durationMinutes = durationMinutes;
+        if(notes) session.trainerNotes = notes;
+        if(status) session.status = status;
 
-    if (checkResult.rows.length === 0) {
-      return res.status(404).json({ msg: 'Session not found.' });
+        // --- Update Evaluation Info ---
+        if(evaluationScore !== undefined) session.evaluationScore = evaluationScore;
+        if(evaluationComments) session.evaluationComments = evaluationComments;
+        if(goalCompletionStatus) session.goalCompletionStatus = goalCompletionStatus;
+        if(suggestionsForNextSession) session.suggestionsForNextSession = suggestionsForNextSession;
+
+        await session.save(); // Sequelize will run validations before saving
+        res.json(session);
+    } catch(err) {
+        // Luồng thay thế 7a, 8a
+        if (err.name === 'SequelizeValidationError') {
+            return res.status(400).json({ msg: 'Dữ liệu đánh giá không hợp lệ.', errors: err.errors });
+        }
+        console.error("Lỗi khi cập nhật buổi tập:", err);
+        res.status(500).send('Lỗi Server');
     }
-    // Optional: Stricter check if only the original recorder can edit.
-    // if (checkResult.rows[0].recorded_by_user_id !== trainerId) {
-    //   return res.status(403).json({ msg: 'Not authorized to update this session.' });
-    // }
-
-    const query = `
-      UPDATE workout_sessions
-      SET
-        session_name = COALESCE($1, session_name),
-        activity_type = COALESCE($2, activity_type),
-        check_in_time = COALESCE($3, check_in_time),
-        check_out_time = $4, -- Allows setting to null
-        completion_percentage = $5, -- Allows setting to null
-        trainer_notes_on_completion = $6, -- Allows setting to null
-        subscription_id = $7, -- Allows setting to null
-        updated_at = CURRENT_TIMESTAMP
-      WHERE session_id = $8 AND member_user_id = $9 -- Ensure it's for the correct member if member_user_id is passed
-      RETURNING *;
-    `;
-    // member_user_id from req.body might be needed if you allow changing it, or for an extra check.
-    // For simplicity, assuming member_user_id is not changed here.
-    // If member_user_id is part of the update, ensure it's in the SET clause and WHERE clause.
-    const memberUserIdFromBody = req.body.member_user_id; // Assuming it's passed for safety
-
-    const values = [
-      session_name, activity_type, check_in_time, check_out_time,
-      completion_percentage, trainer_notes_on_completion, subscription_id,
-      sessionId, memberUserIdFromBody
-    ];
-    const { rows } = await pool.query(query, values);
-
-    if (rows.length === 0) {
-        // This could happen if session_id is valid but member_user_id doesn't match,
-        // or if the session_id was for a different member than intended.
-        return res.status(404).json({ msg: 'Session not found for the specified member or update failed.' });
-    }
-
-    res.json({ msg: 'Workout session updated successfully', session: rows[0] });
-  } catch (error) {
-    console.error('Error updating workout session:', error);
-    res.status(500).json({ msg: 'Server error while updating session' });
-  }
 };

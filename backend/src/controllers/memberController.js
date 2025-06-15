@@ -1,4 +1,4 @@
-const { User, Profile, MemberSubscription, MembershipPackage, sequelize } = require('../models');
+const { User, Profile, MemberSubscription, MembershipPackage, sequelize, WorkoutSession } = require('../models');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
@@ -165,4 +165,38 @@ exports.extendSubscription = async (req, res) => {
     console.error("TRANSACTION FAILED:", err.message);
     res.status(400).json({ msg: err.message || 'Server error while extending subscription.' });
   }
+};
+
+/**
+ * Chức năng: Lấy lịch sử tập luyện của hội viên đang đăng nhập
+ * Tương ứng: Use Case UC006
+ * Route: GET /api/members/my-workout-history
+ */
+exports.getMyWorkoutHistory = async (req, res) => {
+    // The member's ID comes from the `protect` middleware, not from the URL params.
+    const memberId = req.user.user_id; 
+
+    try {
+        const sessions = await WorkoutSession.findAll({
+            where: { memberUserId: memberId },
+            // We include the Trainer's name for display purposes
+            include: [{
+                model: User,
+                as: 'Trainer',
+                attributes: ['user_id'], // We only need the ID from the user table
+                include: [{
+                    model: Profile,
+                    as: 'Profile',
+                    attributes: ['full_name'] // Get the trainer's name
+                }]
+            }],
+            order: [['sessionDatetime', 'DESC']] // Show the most recent sessions first
+        });
+        
+        res.json(sessions);
+
+    } catch (err) {
+        console.error("Lỗi khi lấy lịch sử tập luyện của hội viên:", err);
+        res.status(500).send('Lỗi Server');
+    }
 };

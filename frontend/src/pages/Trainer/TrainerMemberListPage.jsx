@@ -1,258 +1,240 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import AuthContext from '../../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
-const mockPackages = [
-  { id: 'pkg1', name: 'Gym 3 tháng' },
-  { id: 'pkg2', name: 'Yoga 1 tháng' },
-  { id: 'pkg3', name: 'PT 6 tháng' },
-];
-const statusOptions = ['Đang tập', 'Tạm ngưng', 'Kết thúc'];
+const TrainerMemberManagementPage = () => {
+    // --- State for main list ---
+    const [members, setMembers] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
+    const  auth  = useContext(AuthContext);
 
-const TrainerMemberListPage = () => {
-  const [members, setMembers] = useState([]);
-  const [selectedMember, setSelectedMember] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [formType, setFormType] = useState(''); // 'add' | 'edit'
-  const [form, setForm] = useState({
-    email: '',
-    name: '',
-    package: '',
-    startDate: '',
-    status: '',
-  });
-  const [error, setError] = useState('');
-  const [result, setResult] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState(false);
+    // --- State for managing views and forms ---
+    const [view, setView] = useState('list');
+    const [selectedMember, setSelectedMember] = useState(null);
+    const [editFormData, setEditFormData] = useState({});
 
-  // Fetch members (mocked)
-  useEffect(() => {
-    // Replace with real API call
-    setMembers([
-      { id: 1, email: 'hv00234@gmail.com', name: 'Đỗ Tuấn Minh', package: 'Gym 3 tháng', startDate: '2024-06-04', status: 'Đang tập' },
-      { id: 2, email: 'hv00345@gmail.com', name: 'Nguyễn Thị Lan', package: 'Yoga 1 tháng', startDate: '2024-06-01', status: 'Tạm ngưng' },
-    ]);
-  }, []);
+    // --- State for the "Assign Member" modal ---
+    const [isAssignModalVisible, setIsAssignModalVisible] = useState(false);
+    const [unassignedMembers, setUnassignedMembers] = useState([]);
+    const [isLoadingModal, setIsLoadingModal] = useState(false);
 
-  // Show add/edit form
-  const openForm = (type, member = null) => {
-    setFormType(type);
-    setShowForm(true);
-    setError('');
-    setResult('');
-    if (type === 'edit' && member) {
-      setSelectedMember(member);
-      setForm({
-        email: member.email,
-        name: member.name,
-        package: member.package,
-        startDate: member.startDate,
-        status: member.status,
-      });
-    } else {
-      setSelectedMember(null);
-      setForm({ email: '', name: '', package: '', startDate: '', status: '' });
-    }
-  };
+    // --- Data Fetching and Event Handlers ---
 
-  // Handle form change
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setError('');
-    setResult('');
-  };
+    const fetchAssignedMembers = async () => {
+        if (!auth || !auth.token) {
+            setIsLoading(false);
+            setError('Could not verify authentication. Please log in again.');
+            return;
+        }
+        setIsLoading(true);
+        try {
+            const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+            const res = await axios.get(`${process.env.REACT_APP_API_URL}/trainer/members`, config);
+            setMembers(res.data);
+        } catch (err) {
+            setError('Không thể tải danh sách hội viên.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-  // Validate form
-  const validate = () => {
-    if (!form.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) return 'Email hợp lệ là bắt buộc.';
-    if (!form.name || /[^a-zA-ZÀ-ỹ\s]/.test(form.name) || form.name.length > 50) return 'Tên không chứa ký tự đặc biệt, tối đa 50 ký tự.';
-    if (!form.package) return 'Gói tập là bắt buộc.';
-    if (!form.startDate || new Date(form.startDate) > new Date()) return 'Ngày bắt đầu hợp lệ là bắt buộc.';
-    if (!form.status) return 'Trạng thái là bắt buộc.';
-    return '';
-  };
+    useEffect(() => {
+        if (auth?.token) {
+            fetchAssignedMembers();
+        }
+    }, [auth]);
 
-  // Submit add/edit
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError('');
-    setResult('');
-    const errMsg = validate();
-    if (errMsg) {
-      setError(errMsg);
-      return;
-    }
-    if (formType === 'add') {
-      // Replace with real API call
-      setMembers(prev => [...prev, { id: Date.now(), ...form }]);
-      setResult('Thêm học viên thành công!');
-    } else if (formType === 'edit' && selectedMember) {
-      // Replace with real API call
-      // Ensure email and name are not updated from form if they were disabled
-      const updatedMemberData = {
-        ...form,
-        email: selectedMember.email, // Keep original email
-        name: selectedMember.name,   // Keep original name
-      };
-      setMembers(prev => prev.map(m => m.id === selectedMember.id ? { ...m, ...updatedMemberData } : m));
-      setResult('Cập nhật học viên thành công!');
-    }
-    setShowForm(false);
-  };
+    const handleViewDetails = async (memberId) => {
+        setIsLoading(true);
+        try {
+            const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+            const res = await axios.get(`${process.env.REACT_APP_API_URL}/trainer/member/${memberId}`, config);
+            setSelectedMember(res.data);
+            setView('details');
+        } catch (err) {
+            alert('Không thể tải chi tiết hội viên.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    const handleEditClick = (member) => {
+        setSelectedMember(member);
+        setEditFormData({
+            fullName: member.Profile.full_name,
+            phoneNumber: member.Profile.phone_number,
+            dateOfBirth: member.Profile.date_of_birth ? new Date(member.Profile.date_of_birth).toISOString().split('T')[0] : ''
+        });
+        setView('edit');
+    };
 
-  // Delete member
-  const handleDelete = (member) => {
-    setSelectedMember(member);
-    setConfirmDelete(true);
-    setResult('');
-    setError('');
-  };
-  const confirmDeleteMember = () => {
-    // Replace with real API call
-    setMembers(prev => prev.filter(m => m.id !== selectedMember.id));
-    setResult('Xóa học viên thành công!');
-    setConfirmDelete(false);
-    setSelectedMember(null);
-  };
+    const handleEditFormChange = (e) => {
+        setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
+    };
 
-  // View details
-  const handleView = (member) => {
-    setSelectedMember(member);
-    setShowForm(false);
-    setResult('');
-    setError('');
-  };
+    const handleUpdateSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+            await axios.put(`${process.env.REACT_APP_API_URL}/trainer/member/${selectedMember.user_id}`, editFormData, config);
+            alert('Cập nhật thành công!');
+            setView('list');
+            fetchAssignedMembers();
+        } catch(err) {
+            alert('Cập nhật thất bại.');
+        }
+    };
 
-  return (
-    <div>
-      <Link to="/dashboard" style={{ display: 'inline-block', marginBottom: '20px', padding: '10px 15px', backgroundColor: '#6c757d', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
-        &larr; Back to Dashboard
-      </Link>
-      <h2>Quản lý danh sách học viên</h2>
-      <button onClick={() => openForm('add')} style={{ marginBottom: 16, padding: '8px 16px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Thêm học viên</button>
-      <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fff' }}>
-        <thead>
-          <tr style={{ background: '#e3e3e3' }}>
-            <th style={{ border: '1px solid #ccc', padding: 8 }}>Email</th>
-            <th style={{ border: '1px solid #ccc', padding: 8 }}>Tên học viên</th>
-            <th style={{ border: '1px solid #ccc', padding: 8 }}>Gói tập</th>
-            <th style={{ border: '1px solid #ccc', padding: 8 }}>Ngày bắt đầu</th>
-            <th style={{ border: '1px solid #ccc', padding: 8 }}>Trạng thái</th>
-            <th style={{ border: '1px solid #ccc', padding: 8 }}>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {members.map(m => (
-            <tr key={m.id} style={{ background: selectedMember && selectedMember.id === m.id ? '#d0ebff' : undefined }}>
-              <td style={{ border: '1px solid #ccc', padding: 8 }}>{m.email}</td>
-              <td style={{ border: '1px solid #ccc', padding: 8 }}>{m.name}</td>
-              <td style={{ border: '1px solid #ccc', padding: 8 }}>{m.package}</td>
-              <td style={{ border: '1px solid #ccc', padding: 8 }}>{m.startDate}</td>
-              <td style={{ border: '1px solid #ccc', padding: 8 }}>{m.status}</td>
-              <td style={{ border: '1px solid #ccc', padding: 8 }}>
-                <button onClick={() => handleView(m)} style={{ marginRight: 8, padding: '4px 10px', background: '#28a745', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Xem</button>
-                <button onClick={() => openForm('edit', m)} style={{ marginRight: 8, padding: '4px 10px', background: '#ffc107', color: 'black', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Sửa</button>
-                <button onClick={() => handleDelete(m)} style={{ padding: '4px 10px', background: '#dc3545', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Xóa</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {/* Add/Edit Form */}
-      {showForm && (
-        <form onSubmit={handleSubmit} style={{ marginTop: 32, maxWidth: 500, marginLeft: 'auto', marginRight: 'auto', background: '#f9f9f9', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px #eee' }}>
-          <h4>{formType === 'add' ? 'Thêm học viên' : 'Chỉnh sửa học viên'}</h4>
-          <label htmlFor="email" style={{ fontWeight: 500 }}>Email:</label>
-          <input
-            id="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            required
-            disabled={formType === 'edit'}
-            style={{ width: '100%', padding: 8, marginTop: 4, marginBottom: 16 }}
-            placeholder="hv00234@gmail.com"
-          />
-          <label htmlFor="name" style={{ fontWeight: 500 }}>Họ tên học viên:</label>
-          <input
-            id="name"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            required
-            disabled={formType === 'edit'}
-            style={{ width: '100%', padding: 8, marginTop: 4, marginBottom: 16 }}
-            placeholder="Đỗ Tuấn Minh"
-          />
-          <label htmlFor="package" style={{ fontWeight: 500 }}>Gói tập:</label>
-          <select
-            id="package"
-            name="package"
-            value={form.package}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: 8, marginTop: 4, marginBottom: 16 }}
-          >
-            <option value="" disabled>-- Chọn gói tập --</option>
-            {mockPackages.map(pkg => (
-              <option key={pkg.id} value={pkg.name}>{pkg.name}</option>
-            ))}
-          </select>
-          <label htmlFor="startDate" style={{ fontWeight: 500 }}>Ngày bắt đầu:</label>
-          <input
-            id="startDate"
-            name="startDate"
-            type="date"
-            value={form.startDate}
-            onChange={handleChange}
-            required
-            max={new Date().toISOString().slice(0, 10)}
-            style={{ width: '100%', padding: 8, marginTop: 4, marginBottom: 16 }}
-          />
-          <label htmlFor="status" style={{ fontWeight: 500 }}>Trạng thái:</label>
-          <select
-            id="status"
-            name="status"
-            value={form.status}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: 8, marginTop: 4, marginBottom: 16 }}
-          >
-            <option value="" disabled>-- Chọn trạng thái --</option>
-            {statusOptions.map(st => (
-              <option key={st} value={st}>{st}</option>
-            ))}
-          </select>
-          <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-            {formType === 'add' ? 'Thêm' : 'Cập nhật'}
-          </button>
-          {error && <div style={{ marginTop: 16, color: 'red', fontWeight: 500 }}>{error}</div>}
-          {result && <div style={{ marginTop: 16, color: 'green', fontWeight: 500 }}>{result}</div>}
-        </form>
-      )}
-      {/* View details */}
-      {selectedMember && !showForm && (
-        <div style={{ marginTop: 32, maxWidth: 500, marginLeft: 'auto', marginRight: 'auto', background: '#f9f9f9', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px #eee' }}>
-          <h4>Chi tiết học viên</h4>
-          <div><strong>Email:</strong> {selectedMember.email}</div>
-          <div><strong>Họ tên:</strong> {selectedMember.name}</div>
-          <div><strong>Gói tập:</strong> {selectedMember.package}</div>
-          <div><strong>Ngày bắt đầu:</strong> {selectedMember.startDate}</div>
-          <div><strong>Trạng thái:</strong> {selectedMember.status}</div>
-          <button onClick={() => setSelectedMember(null)} style={{ marginTop: 16, padding: '8px 16px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Đóng</button>
+    const handleDelete = async (memberId) => {
+        if (window.confirm('Bạn có chắc chắn muốn xóa hội viên này? Hành động này không thể hoàn tác.')) {
+            try {
+                const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+                await axios.delete(`${process.env.REACT_APP_API_URL}/trainer/member/${memberId}`, config);
+                alert('Xóa thành công!');
+                fetchAssignedMembers();
+            } catch (err) {
+                alert('Xóa thất bại.');
+            }
+        }
+    };
+
+    const handleOpenAssignModal = async () => {
+        setIsAssignModalVisible(true);
+        setIsLoadingModal(true);
+        try {
+            const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+            const res = await axios.get(`${process.env.REACT_APP_API_URL}/users/unassigned-members`, config);
+            setUnassignedMembers(res.data);
+        } catch (err) {
+            alert('Could not load list of available members.');
+        } finally {
+            setIsLoadingModal(false);
+        }
+    };
+    
+    const handleAssignMember = async (memberToAssign) => {
+        if (window.confirm(`Bạn có chắc muốn phân công học viên "${memberToAssign.Profile.full_name}" cho mình?`)) {
+            try {
+                const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+                const bookingData = {
+                    trainer_user_id: auth.user.user_id,
+                    member_user_id: memberToAssign.user_id,
+                    session_datetime: new Date().toISOString(), 
+                    notes_member: 'Initial assignment by trainer.'
+                };
+                await axios.post(`${process.env.REACT_APP_API_URL}/bookings`, bookingData, config);
+                
+                alert('Phân công thành công!');
+                setIsAssignModalVisible(false);
+                fetchAssignedMembers();
+            } catch (err) {
+                alert('Phân công thất bại.');
+            }
+        }
+    };
+
+    // --- RENDER LOGIC ---
+
+    if (isLoading) return <p>Đang tải...</p>;
+    if (error) return <p style={{ color: 'red' }}>{error}</p>;
+
+    const AssignMemberModal = (
+        <div className="modal-overlay">
+            <div className="modal-content">
+                <h2>Phân công Học viên có sẵn</h2>
+                <div className="search-results">
+                    {isLoadingModal ? <p>Đang tải danh sách...</p> : 
+                     unassignedMembers.length > 0 ? unassignedMembers.map(user => (
+                        <div key={user.user_id} className="search-result-item">
+                            <span>{user.Profile.full_name} ({user.email})</span>
+                            <button onClick={() => handleAssignMember(user)}>Phân công</button>
+                        </div>
+                    )) : <p>Không có học viên nào chưa được phân công.</p>}
+                </div>
+                <button type="button" className="btn-secondary" style={{marginTop: '1rem'}} onClick={() => setIsAssignModalVisible(false)}>Đóng</button>
+            </div>
         </div>
-      )}
-      {/* Confirm delete */}
-      {confirmDelete && (
-        <div style={{ marginTop: 32, maxWidth: 400, marginLeft: 'auto', marginRight: 'auto', background: '#fff3cd', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px #eee', color: '#856404' }}>
-          <h4>Xác nhận xóa học viên</h4>
-          <div>Bạn có chắc chắn muốn xóa học viên <strong>{selectedMember?.name}</strong> không?</div>
-          <button onClick={confirmDeleteMember} style={{ marginTop: 16, marginRight: 8, padding: '8px 16px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Xóa</button>
-          <button onClick={() => setConfirmDelete(false)} style={{ marginTop: 16, padding: '8px 16px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Hủy</button>
+    );
+    
+    const renderListView = () => (
+        <div>
+            <div className="page-header">
+                <h2>Quản lý Danh sách Học viên</h2>
+                <button className="btn-add-new" onClick={handleOpenAssignModal}>
+                    Phân công Học viên
+                </button>
+            </div>
+            <div className="table-wrapper">
+                <table className="data-table">
+                    <thead>
+                        <tr>
+                            <th>Tên Học viên</th>
+                            <th>Email</th>
+                            <th>Gói tập hiện tại</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {members.length > 0 ? members.map(member => {
+                            const latestSubscription = member.MemberSubscriptions?.sort((a, b) => new Date(b.end_date) - new Date(a.end_date))[0];
+                            return (
+                                <tr key={member.user_id}>
+                                    <td>{member.Profile?.full_name || 'N/A'}</td>
+                                    <td>{member.email}</td>
+                                    <td>{latestSubscription?.MembershipPackage?.package_name || 'N/A'}</td>
+                                    <td>
+                                        <span className={`status-badge status-${(latestSubscription?.activityStatus || 'unknown').toLowerCase()}`}>
+                                            {latestSubscription?.activityStatus || 'N/A'}
+                                        </span>
+                                    </td>
+                                    <td className="action-buttons">
+                                        <button className="btn-view" onClick={() => handleViewDetails(member.user_id)}>Xem</button>
+                                        <button className="btn-edit" onClick={() => handleEditClick(member)}>Sửa</button>
+                                        <button className="btn-delete" onClick={() => handleDelete(member.user_id)}>Xóa</button>
+                                    </td>
+                                </tr>
+                            );
+                        }) : (
+                            <tr><td colSpan="5" className="no-data-cell">Chưa có học viên nào được phân công.</td></tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
-      )}
-    </div>
-  );
+    );
+
+    const renderDetailView = () => (
+        <div>
+            <button className="btn-back-dashboard" onClick={() => setView('list')}>← Quay lại danh sách</button>
+            <h2>Chi tiết Học viên: {selectedMember.Profile.full_name}</h2>
+            {/* ... detailed view content ... */}
+        </div>
+    );
+
+    const renderEditView = () => (
+        <div>
+            <button className="btn-back-dashboard" onClick={() => setView('list')}>← Hủy bỏ</button>
+            <h2>Chỉnh sửa Học viên: {selectedMember.Profile.full_name}</h2>
+            <form onSubmit={handleUpdateSubmit} className="edit-form">
+                {/* ... edit form inputs ... */}
+            </form>
+        </div>
+    );
+
+    return (
+        <div className="management-page-container">
+            {isAssignModalVisible && AssignMemberModal}
+            <Link to="/dashboard" className="btn-back-dashboard">← Quay lại Dashboard</Link>
+            
+            {/* --- THIS IS THE FIX --- */}
+            {view === 'list' && renderListView()}
+            {view === 'details' && renderDetailView()}
+            {view === 'edit' && renderEditView()}
+        </div>
+    );
 };
 
-export default TrainerMemberListPage;
+export default TrainerMemberManagementPage;

@@ -4,8 +4,9 @@ const { PersonalTrainingBooking, User, Profile } = require('../models');
 // @route   POST /api/bookings
 // @access  Private (Member)
 exports.createBooking = async (req, res) => {
-  const memberUserId = req.user.user_id;
-  const { trainer_user_id, session_datetime, duration_minutes, notes_member, subscription_id } = req.body;
+  const { trainer_user_id, session_datetime, duration_minutes, notes_member, subscription_id, member_user_id  } = req.body;
+
+  const bookingForMemberId = member_user_id || req.user.user_id;
 
   if (!trainer_user_id || !session_datetime) {
     return res.status(400).json({ msg: 'Trainer and session date/time are required.' });
@@ -13,7 +14,7 @@ exports.createBooking = async (req, res) => {
 
   try {
     const newBooking = await PersonalTrainingBooking.create({
-      memberUserId,
+      memberUserId: bookingForMemberId,
       trainerUserId: trainer_user_id,
       sessionDatetime: session_datetime,
       durationMinutes: duration_minutes,

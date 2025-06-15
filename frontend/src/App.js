@@ -15,7 +15,7 @@ import { AuthProvider } from './contexts/AuthContext';
 // Member Pages
 import MemberProfilePage from './pages/Member/MemberProfilePage';
 import MemberPaymentPage from './pages/Member/MemberPaymentPage';
-import MemberTrainingHistoryPage from './pages/Member/MemberTrainingHistoryPage';
+import MemberWorkoutHistoryPage from './pages/Member/MemberWorkoutHistoryPage';
 import ServiceUserRatingPage from './pages/Member/ServiceUserRatingPage';
 import MemberBookingPage from './pages/Member/MemberBookingPage';
 // Package Page (can be public or private depending on requirements)
@@ -26,12 +26,16 @@ import OwnerEquipmentStatusPage from './pages/Owner/OwnerEquipmentStatusPage';
 import StaffRegisterMemberPage from './pages/Staff/StaffRegisterMemberPage';
 import StaffRenewPackagePage from './pages/Staff/StaffRenewPackagePage';
 import StaffFeedbackManagementPage from './pages/Staff/StaffFeedbackManagementPage';
-import StaffMemberServiceHistoryPage from './pages/Staff/StaffMemberServiceHistoryPage';
+import StaffMemberServiceHistoryPage from './pages/Staff/RecordServiceUsagePage';
 import TrainerMemberListPage from './pages/Trainer/TrainerMemberListPage';
 import TrainerMemberProgressPage from './pages/Trainer/TrainerMemberProgressPage'; // Import the new page
 import EquipmentStatusPage from './pages/Staff/EquipmentStatusPage';
+import EvaluateWorkoutPage from './pages/Trainer/EvaluateWorkoutPage'; // Import the new page for evaluating workouts
+import UserManagementPage from './pages/Owner/UserManagementPage';
 
 import './App.css';
+import TrackWorkoutPage from './pages/Trainer/TrackWorkoutPage';
+import SystemSettingsPage from './pages/Owner/SystemSettingsPage';  
 
 function App() {
   return (
@@ -66,7 +70,7 @@ function App() {
               } />
               <Route path="/member/history" element={
                 <PrivateRoute allowedRoles={['member']}>
-                  <MemberTrainingHistoryPage />
+                  <MemberWorkoutHistoryPage />
                 </PrivateRoute>
               } />
               <Route path="/member/feedback" element={
@@ -96,9 +100,18 @@ function App() {
               } />
               <Route path="/trainer/member-progress" element={
                 <PrivateRoute allowedRoles={['trainer', 'owner']}>
-                  <TrainerMemberProgressPage />
+                  <TrackWorkoutPage/>
                 </PrivateRoute>
               } />
+
+              <Route 
+                path="/trainer/evaluate-member" 
+                element={
+                <PrivateRoute roles={['trainer', 'owner']}>
+                  <EvaluateWorkoutPage />
+                  </PrivateRoute>
+              } 
+        />
 
               {/* Admin/Owner Specific Routes - Example placeholder */}
               <Route path="/admin/manage-equipment" element={
@@ -106,9 +119,20 @@ function App() {
                   <OwnerEquipmentStatusPage />
                 </PrivateRoute>
               } />
+              <Route path="/admin/manage-system" element={
+                <PrivateRoute allowedRoles={['owner']}>
+                  <SystemSettingsPage />
+                </PrivateRoute>
+              } />
+
+              <Route path="/admin/manage-users" element={
+                <PrivateRoute allowedRoles={['owner']}>
+                  <UserManagementPage />
+                </PrivateRoute>
+              } />
 
               <Route path="/staff/register-member" element={
-                <PrivateRoute allowedRoles={['staff']}>
+                <PrivateRoute allowedRoles={['staff', 'trainer']}>
                   <StaffRegisterMemberPage />
                 </PrivateRoute>
               } />

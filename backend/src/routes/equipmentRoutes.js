@@ -1,21 +1,16 @@
+// File: src/routes/equipmentRoutes.js
 const express = require('express');
 const router = express.Router();
 const equipmentController = require('../controllers/equipmentController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
-// @route   GET /api/equipment
-// @desc    Get all equipment
-// @access  Private (Staff/Owner)
+// Route để nhân viên lấy danh sách thiết bị
 router.get(
     '/',
-    protect,
-    authorize('staff', 'owner'),
     equipmentController.getAllEquipment
 );
 
-// @route   PUT /api/equipment/:id
-// @desc    Update a specific piece of equipment
-// @access  Private (Staff/Owner)
+// Route để nhân viên cập nhật một thiết bị
 router.put(
     '/:id',
     protect,

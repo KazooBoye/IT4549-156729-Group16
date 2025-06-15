@@ -9,7 +9,7 @@ const { protect, authorize } = require('../middlewares/authMiddleware'); // Usin
 router.post(
     '/',
     protect,
-    authorize('member'),
+    authorize('member', 'trainer', 'owner'),
     bookingController.createBooking
 );
 

@@ -16,6 +16,9 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const packageRoutes = require('./routes/packageRoutes');
 const userRoutes = require('./routes/userRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
+const serviceRoutes = require('./routes/serviceRoutes'); // Import service routes
+const trainerRoutes = require('./routes/trainerRoutes'); // Import trainer routes
+const settingsRoutes = require('./routes/settingsRoutes');
 
 
 const app = express();
@@ -40,6 +43,9 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/packages', packageRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/services', serviceRoutes); // Use service routes
+app.use('/api/trainer', trainerRoutes); // Use trainer routes
+app.use('/api/settings', settingsRoutes); // Use settings routes
 
 const PORT = process.env.PORT || 5001; // Using 5001 as seen in previous logs
 
